@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>台灣族群分布圖鑑｜2014 客委會調查 · 22 縣市互動地圖</title>
+<meta name="description" content="以客委會 2014 年調查（附表 A-3）為單一口徑，呈現台灣 22 縣市閩南、客家、外省、原住民四族群比例、近似 95% 區間、多樣性指標與資料完整性查核。">
+<style>/* ==========================================================================
+   台灣族群分布圖鑑 — 樣式
+   冷調藍灰底 + 近白卡片 + 分層陰影（可切換 [data-theme="dark"]）
+   ========================================================================== */
+
+:root {
+  /* 表面層次：由外而內逐層提亮 */
+  --bg:        #edf1f7;
+  --bg-deep:   #e4eaf3;
+  --surface:   #ffffff;
+  --surface-2: #f6f8fc;
+  --surface-3: #eceff6;
+
+  /* 文字：三階，皆通過 WCAG AA */
+  --ink:       #0d1520;
+  --ink-2:     #47546a;
+  --ink-3:     #5f6d83;
+
+  --line:      #dee5ee;
+  --line-2:    #c3cddb;
+
+  --accent:    #0b6b5f;
+  --accent-2:  #2f6fc4;
+  --accent-ink:#075349;
+
+  --warn-bg:   #fdf6e8;
+  --warn-line: #eadcbb;
+  --warn-ink:  #7a5510;
+
+  --sh-1: 0 1px 2px rgba(13,21,32,.045), 0 1px 1px rgba(13,21,32,.03);
+  --sh-2: 0 1px 3px rgba(13,21,32,.05), 0 10px 24px -12px rgba(13,21,32,.14);
+  --sh-3: 0 2px 6px rgba(13,21,32,.07), 0 20px 44px -20px rgba(13,21,32,.24);
+
+  --radius:   16px;
+  --radius-sm: 10px;
+
+  /* 地圖圖框 */
+  --map-sea-1: #f5fafd;
+  --map-sea-2: #e2edf8;
+  --map-frame: #d3dde9;
+  --map-empty: #e7ecf4;
+  --grat:      rgba(47,111,196,.16);
+
+  /* 族群色 */
+  --g-minnan:     #2f6fc4;
+  --g-hakka:      #0d7f6f;
+  --g-mainlander: #8f4fc0;
+  --g-indigenous: #d2742a;
+  --g-taiwanese:  #64748b;
+  --g-other:      #94a3b8;
+}
+
+[data-theme="dark"] {
+  --bg:        #0b0f15;
+  --bg-deep:   #080b10;
+  --surface:   #141a23;
+  --surface-2: #1a212b;
+  --surface-3: #202934;
+
+  --ink:       #eff3f8;
+  --ink-2:     #b2bece;
+  --ink-3:     #8894a6;
+
+  --line:      #252e3a;
+  --line-2:    #36414f;
+
+  --accent:    #2fbfa5;
+  --accent-2:  #6ea4e8;
+  --accent-ink:#7de6d2;
+
+  --warn-bg:   #2a2418;
+  --warn-line: #4d4128;
+  --warn-ink:  #e8c982;
+
+  --sh-1: 0 1px 2px rgba(0,0,0,.5);
+  --sh-2: 0 1px 3px rgba(0,0,0,.5), 0 12px 28px -14px rgba(0,0,0,.7);
+  --sh-3: 0 2px 8px rgba(0,0,0,.55), 0 24px 50px -22px rgba(0,0,0,.85);
+
+  --map-sea-1: #121924;
+  --map-sea-2: #0d131b;
+  --map-frame: #2b3644;
+  --map-empty: #232c38;
+  --grat:      rgba(110,164,232,.16);
+
+  --g-minnan:     #6ea4e8;
+  --g-hakka:      #3cbba6;
+  --g-mainlander: #bb8ce4;
+  --g-indigenous: #f0a05c;
+  --g-taiwanese:  #94a3b8;
+  --g-other:      #7d8794;
+}
+
+* { box-sizing: border-box; }
+/* 明確給底色：漸層只走 background-image，底色留在 background-color，
+   否則 getComputedStyle 讀不到不透明底色（對比度檢測與部分瀏覽器會失去基準） */
+html { -webkit-text-size-adjust: 100%; background-color: var(--bg); }
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1200px 620px at 12% -8%, color-mix(in srgb, var(--accent-2) 8%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC",
+               "PingFang TC", "Microsoft JhengHei", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.62;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 680; line-height: 1.22; letter-spacing: -.018em; }
+p { margin: 0 0 .7em; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+button { font: inherit; color: inherit; }
+
+.wrap { max-width: 1460px; margin: 0 auto; padding: 0 28px; }
+
+/* ── 頂欄 ───────────────────────────────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 60;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: saturate(190%) blur(14px);
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+.topbar-in { display: flex; align-items: center; gap: 20px; padding: 12px 0; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-mark {
+  width: 36px; height: 36px; flex: none; border-radius: 11px;
+  background: linear-gradient(145deg, var(--accent) 8%, var(--accent-2) 118%);
+  display: grid; place-items: center; color: #fff;
+  font-size: 16px; font-weight: 700; letter-spacing: -.03em;
+  box-shadow: 0 3px 10px -3px rgba(11,107,95,.55);
+}
+.brand-txt b { display: block; font-size: 15.5px; font-weight: 680; letter-spacing: -.02em; }
+.brand-txt span { display: block; font-size: 11.5px; color: var(--ink-3); letter-spacing: .01em; }
+
+.tabs { display: flex; gap: 3px; margin-left: auto; flex-wrap: wrap; }
+.tab {
+  appearance: none; border: 1px solid transparent; background: transparent;
+  padding: 7px 14px; border-radius: 10px; cursor: pointer;
+  font-size: 13.5px; font-weight: 560; color: var(--ink-2);
+  transition: background .15s, color .15s, box-shadow .15s, border-color .15s;
+}
+.tab:hover { background: var(--surface); color: var(--ink); box-shadow: var(--sh-1); }
+.tab[aria-selected="true"] {
+  background: var(--surface); border-color: var(--line); color: var(--ink);
+  box-shadow: var(--sh-2);
+}
+.icon-btn {
+  appearance: none; border: 1px solid var(--line-2); background: var(--surface);
+  width: 35px; height: 35px; border-radius: 10px; cursor: pointer;
+  display: grid; place-items: center; color: var(--ink-2); box-shadow: var(--sh-1);
+  transition: color .15s, border-color .15s, transform .15s;
+}
+.icon-btn:hover { color: var(--ink); border-color: var(--ink-3); transform: translateY(-1px); }
+
+/* ── 頁首 ───────────────────────────────────────────────────────────── */
+/* 雙欄：文字在左、數字在右，把垂直空間砍半，讓地圖早點進到首屏 */
+.hero { padding: 20px 0 14px; }
+.hero-grid { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 24px 34px; align-items: end; }
+@media (max-width: 940px) { .hero-grid { grid-template-columns: minmax(0,1fr); align-items: start; } }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 660; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: 8px;
+}
+.eyebrow::before {
+  content: ''; width: 22px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+.hero h1 {
+  font-size: clamp(23px, 2.55vw, 34px);
+  letter-spacing: -.033em; line-height: 1.16; max-width: 30ch;
+}
+.hero h1 em {
+  font-style: normal;
+  background: linear-gradient(96deg, var(--accent) 0%, var(--accent-2) 96%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: var(--accent-ink);
+}
+.hero-sub { color: var(--ink-2); max-width: 74ch; margin: 8px 0 0; font-size: 14px; }
+
+.notice {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--warn-bg); border: 1px solid var(--warn-line);
+  color: var(--warn-ink); border-radius: 11px; padding: 9px 13px;
+  font-size: 12.5px; line-height: 1.55; margin-top: 12px; box-shadow: var(--sh-1);
+}
+.notice b { font-weight: 680; }
+.notice-link {
+  appearance: none; background: none; border: 0; padding: 0; cursor: pointer;
+  color: inherit; text-decoration: underline; text-underline-offset: 2px;
+  font-size: inherit; font-weight: 620; white-space: nowrap;
+}
+
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+@media (max-width: 940px) { .stats { grid-template-columns: repeat(auto-fit, minmax(110px,1fr)); } }
+.stat {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 11px;
+  padding: 7px 12px; box-shadow: var(--sh-1);
+  transition: transform .18s, box-shadow .18s;
+}
+.stat:hover { transform: translateY(-2px); box-shadow: var(--sh-2); }
+.stat b { display: block; font-size: 17.5px; font-weight: 670; letter-spacing: -.03em; line-height: 1.3; }
+.stat span { font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+
+/* ── 版面 ───────────────────────────────────────────────────────────── */
+.view[hidden] { display: none; }
+.panel {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--sh-2); min-width: 0;
+}
+.panel-hd {
+  padding: 11px 16px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.panel-hd h2 { font-size: 14.5px; white-space: nowrap; }
+.panel-hd .hint { font-size: 12px; color: var(--ink-3); margin-left: auto; }
+
+/* 地圖卡的工具列：把選擇器收進標題列，省下垂直空間讓地圖早點出現 */
+.toolbar { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 8px; }
+.toolbar-label {
+  font-size: 11px; font-weight: 660; color: var(--ink-3);
+  letter-spacing: .08em; text-transform: uppercase;
+}
+.toolbar .chk { margin-left: 4px; }
+.panel-bd { padding: 16px; }
+.panel-bd.tight { padding: 10px; }
+
+.map-layout { display: grid; grid-template-columns: minmax(0,1fr) 400px; gap: 20px; align-items: start; }
+/* minmax(0,1fr) 而非 1fr：grid 子項的 min-width:auto 會被 #map 的 min-width 撐破頁面 */
+@media (max-width: 1180px) { .map-layout { grid-template-columns: minmax(0, 1fr); } }
+.map-layout > * { min-width: 0; }
+.map-layout .panel, .map-layout .panel-bd { min-width: 0; }
+
+/* 兩欄分析版面 */
+.rank-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 20px; align-items: start; }
+.rank-layout > .col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+@media (max-width: 1040px) { .rank-layout { grid-template-columns: minmax(0,1fr); } }
+.rank-layout .panel, .rank-layout .panel-bd { min-width: 0; }
+
+/* 分析區的兩欄 */
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr)); gap: 20px; }
+.two-col > * { min-width: 0; }
+
+/* 桌面時右側詳情卡跟著捲動 */
+@media (min-width: 1181px) {
+  .sticky-side { position: sticky; top: 74px; max-height: calc(100vh - 92px); overflow: auto; }
+  .sticky-side::-webkit-scrollbar { width: 8px; }
+  .sticky-side::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 8px; }
+}
+
+/* ── 控制項 ─────────────────────────────────────────────────────────── */
+.ctl-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field > label, .field-label {
+  font-size: 11px; font-weight: 660; color: var(--ink-3);
+  letter-spacing: .08em; text-transform: uppercase;
+}
+.seg {
+  display: inline-flex; flex-wrap: wrap; gap: 2px;
+  background: var(--surface-3); border: 1px solid var(--line);
+  border-radius: 10px; padding: 2px; max-width: 100%;
+}
+.seg button {
+  appearance: none; border: 0; background: transparent; cursor: pointer;
+  padding: 4px 11px; border-radius: 8px; font-size: 12.5px; font-weight: 560;
+  color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px;
+  transition: background .15s, color .15s, box-shadow .15s;
+}
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--sh-1); }
+.swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+select, input[type="search"] {
+  appearance: none; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line-2); border-radius: 10px; padding: 8px 12px;
+  font-size: 13.5px; min-width: 122px; box-shadow: var(--sh-1);
+}
+input[type="search"] { min-width: 190px; }
+select:focus-visible, input:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.chk { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.chk input { accent-color: var(--accent); width: 15px; height: 15px; }
+
+/* ── 地圖 ───────────────────────────────────────────────────────────── */
+.map-shell { position: relative; }
+#map { display: block; width: 100%; height: auto; touch-action: manipulation; }
+/* 窄螢幕：地圖維持最小寬度並可橫向捲動，否則地名會縮到看不見 */
+.map-scroll { overflow-x: auto; overscroll-behavior-x: contain; border-radius: 14px; }
+.map-hint { font-size: 11.5px; color: var(--ink-3); margin: 0 0 6px; display: none; }
+@media (max-width: 780px) {
+  #map { min-width: 720px; }
+  .map-hint { display: block; }
+  .map-hint[hidden] { display: none; }
+}
+
+.map-bg { fill: url(#seaGrad); }
+.frame-box { fill: none; stroke: var(--map-frame); stroke-width: 1; }
+.grat-line { stroke: var(--grat); stroke-width: 1; }
+.grat-label { fill: var(--ink-3); font-size: 11px; letter-spacing: .04em; }
+.frame-title { fill: var(--ink-2); font-size: 15px; font-weight: 650; letter-spacing: .01em; }
+
+.county {
+  stroke: var(--surface); stroke-width: 1.15; stroke-linejoin: round;
+  cursor: pointer;
+  transition: fill .38s ease, opacity .16s ease, filter .16s ease;
+}
+[data-theme="dark"] .county { stroke: #0d1219; }
+.county.is-empty { fill: url(#hatch); stroke: var(--line-2); }
+.county.dimmed { opacity: .14; }
+.county.faded  { opacity: .45; }
+.county:hover  { filter: brightness(1.1) saturate(1.06); }
+.county.sel    { stroke: var(--ink); stroke-width: 2.3; }
+[data-theme="dark"] .county.sel { stroke: #fff; }
+
+.c-label {
+  font-size: 16px; font-weight: 640; fill: var(--ink);
+  paint-order: stroke; stroke: var(--surface); stroke-width: 3.6px;
+  stroke-linejoin: round; pointer-events: none;
+}
+.c-value {
+  font-size: 13px; font-weight: 700; fill: var(--ink);
+  paint-order: stroke; stroke: var(--surface); stroke-width: 3px;
+  stroke-linejoin: round; pointer-events: none;
+}
+.c-leader { stroke: var(--ink-3); stroke-width: .9; fill: none; pointer-events: none; }
+.c-dot { fill: var(--ink-3); pointer-events: none; }
+.scalebar line { stroke: var(--ink-3); stroke-width: 1; }
+.scalebar text { fill: var(--ink-3); font-size: 11px; }
+.inset-note { fill: var(--ink-3); font-size: 11.5px; }
+.island-shadow { filter: url(#islandShadow); }
+
+.tooltip {
+  position: absolute; z-index: 40; pointer-events: none;
+  background: var(--surface); border: 1px solid var(--line-2);
+  border-radius: 12px; box-shadow: var(--sh-3); padding: 10px 13px;
+  font-size: 12.5px; min-width: 158px; opacity: 0; transition: opacity .12s ease;
+}
+.tooltip.on { opacity: 1; }
+.tooltip b { display: block; font-size: 13.5px; margin-bottom: 5px; }
+.tooltip .t-row { display: flex; justify-content: space-between; gap: 16px; color: var(--ink-2); }
+.tooltip .t-row em { font-style: normal; font-weight: 660; color: var(--ink); }
+.tooltip .t-note { color: var(--ink-3); font-size: 11px; margin-top: 6px; }
+
+/* 圖例 */
+.legend { margin-top: 16px; display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; }
+.ramp-bar { width: 190px; height: 11px; border-radius: 6px; border: 1px solid var(--line-2); }
+.ramp-ends { display: flex; justify-content: space-between; width: 190px; font-size: 11px; color: var(--ink-3); margin-top: 4px; }
+.legend-key { display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; color: var(--ink-2); }
+.legend-key .row { display: flex; align-items: center; gap: 8px; }
+.hatch-key {
+  width: 22px; height: 13px; border-radius: 4px; border: 1px solid var(--line-2);
+  background: repeating-linear-gradient(45deg, var(--surface-3) 0 3px, var(--line-2) 3px 4.5px);
+}
+
+/* ── 詳情卡 ─────────────────────────────────────────────────────────── */
+.detail-name { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.detail-name h2 { font-size: 27px; letter-spacing: -.03em; }
+.region-tag {
+  font-size: 11.5px; font-weight: 640; padding: 3px 9px; border-radius: 999px;
+  background: var(--surface-3); border: 1px solid var(--line); color: var(--ink-2);
+}
+.big-fig { display: flex; align-items: baseline; gap: 9px; margin: 14px 0 2px; }
+.big-fig b { font-size: 44px; font-weight: 680; letter-spacing: -.045em; line-height: 1; }
+.big-fig span { color: var(--ink-3); font-size: 12.5px; }
+.big-fig .na { font-size: 26px; color: var(--ink-3); letter-spacing: 0; }
+
+.ci-line { font-size: 12px; color: var(--ink-3); margin: 7px 0 0; }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 14px; margin: 16px 0 4px; }
+.kv > div b { display: block; font-size: 15.5px; font-weight: 650; }
+.kv > div span { font-size: 11.5px; color: var(--ink-3); }
+
+.stack {
+  display: flex; height: 18px; border-radius: 6px; overflow: hidden;
+  border: 1px solid var(--line); background: var(--surface-3);
+}
+.stack i { display: block; height: 100%; }
+.stack-legend { display: flex; flex-direction: column; gap: 1px; margin-top: 12px; }
+.srow {
+  display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 10px;
+  align-items: center; padding: 5px 7px; border-radius: 8px; font-size: 12.8px;
+}
+.srow:hover { background: var(--surface-2); }
+.srow .nm { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.srow .nm i { width: 9px; height: 9px; border-radius: 2.5px; flex: none; }
+.srow .nm span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.srow .vv { font-weight: 650; }
+.srow .bb { font-size: 11px; color: var(--ink-3); min-width: 48px; text-align: right; }
+.srow.muted .nm span, .srow.muted .vv { color: var(--ink-3); }
+
+.chips { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 15px; }
+.chip {
+  font-size: 11.5px; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-2);
+}
+.chip.ok { border-color: #bfe3da; background: #eef8f5; color: #0a5b50; }
+.chip.warn { border-color: var(--warn-line); background: var(--warn-bg); color: var(--warn-ink); }
+[data-theme="dark"] .chip.ok { border-color: #245049; background: #16302c; color: #74d6c3; }
+
+.note {
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 11px;
+  padding: 12px 14px; font-size: 12.5px; color: var(--ink-2); margin-top: 15px;
+}
+.note b { color: var(--ink); }
+
+/* ── 排名／圖表 ─────────────────────────────────────────────────────── */
+.rank-list { display: flex; flex-direction: column; gap: 2px; }
+.rrow {
+  display: grid; grid-template-columns: minmax(64px, 96px) minmax(0,1fr) 54px 62px;
+  gap: 10px; align-items: center; padding: 5px 8px; border-radius: 9px;
+  cursor: pointer; border: 1px solid transparent;
+  transition: background .14s, border-color .14s;
+}
+.rrow:hover { background: var(--surface-2); }
+.rrow.sel { border-color: var(--line-2); background: var(--surface-2); }
+@media (max-width: 560px) {
+  .rrow { grid-template-columns: minmax(56px, 80px) minmax(0,1fr) 46px; gap: 7px; }
+  .rrow .rs { display: none; }
+}
+.rrow .rn { font-size: 13px; font-weight: 570; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rrow .rv { text-align: right; font-weight: 670; font-size: 13.5px; }
+.rrow .rs { font-size: 11px; color: var(--ink-3); text-align: right; }
+
+/* 點線圖：淡長條 + 值點 + 區間鬚 */
+.track { position: relative; height: 22px; }
+.track .xtick { position: absolute; top: 2px; bottom: 2px; border-left: 1px solid var(--line); }
+.track .bar {
+  position: absolute; left: 0; top: 8px; height: 6px; border-radius: 3px;
+  min-width: 2px; opacity: .34; transition: width .28s ease;
+}
+.track .dot {
+  position: absolute; top: 4px; width: 14px; height: 14px; border-radius: 50%;
+  transform: translateX(-7px); border: 2.5px solid var(--surface);
+  box-shadow: 0 1px 3px rgba(13,21,32,.22);
+}
+.track .whisk { position: absolute; top: 7px; height: 8px; border-left: 1.5px solid var(--line-2); }
+.track .cap { position: absolute; top: 10px; width: 1px; height: 2px; background: var(--line-2); }
+
+.chart-wrap { overflow-x: auto; }
+.stack-all { display: flex; flex-direction: column; gap: 5px; min-width: 660px; }
+.sa-row { display: grid; grid-template-columns: 92px minmax(0,1fr) 54px; gap: 10px; align-items: center; }
+.sa-row .nm { font-size: 12.5px; cursor: pointer; }
+.sa-bar { display: flex; height: 18px; border-radius: 5px; overflow: hidden; border: 1px solid var(--line); }
+.sa-bar i { display: block; height: 100%; }
+.sa-row.sel .sa-bar { outline: 2px solid var(--ink); outline-offset: 1px; }
+.sa-row.dim { opacity: .28; }
+.sa-pct { font-size: 12px; font-weight: 660; text-align: right; }
+
+table { border-collapse: collapse; width: 100%; font-size: 12.6px; }
+th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); }
+thead th { position: sticky; top: 0; background: var(--surface-2); font-weight: 650; color: var(--ink-2); z-index: 2; }
+thead th:first-child { z-index: 3; }
+thead th.sortable { cursor: pointer; user-select: none; }
+thead th.sortable:hover { color: var(--ink); }
+tbody tr:hover td { background: var(--surface-2); }
+tbody tr.sel td { background: var(--surface-2); }
+td.null { color: var(--ink-3); }
+.tbl-scroll { max-height: 580px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
+.tbl-scroll table { min-width: 1100px; }
+
+.muted { color: var(--ink-3); }
+.small { font-size: 12.3px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+.btn {
+  appearance: none; border: 1px solid var(--line-2); background: var(--surface);
+  padding: 8px 14px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 570;
+  box-shadow: var(--sh-1);
+  transition: border-color .15s, transform .15s, box-shadow .15s, background .15s;
+}
+.btn:hover { border-color: var(--ink-3); transform: translateY(-1px); box-shadow: var(--sh-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+/* 深色模式下主色鈕為亮色底，白字對比不足 → 改用深字 */
+[data-theme="dark"] .btn.primary { color: #06211c; }
+[data-theme="dark"] .btn.primary:hover { color: #06211c; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.cmp-head { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 16px; align-items: end; margin-bottom: 18px; }
+@media (max-width: 560px) { .cmp-head { grid-template-columns: minmax(0,1fr); } }
+.diff-row {
+  display: grid; grid-template-columns: minmax(70px,96px) minmax(0,1fr) minmax(96px,124px);
+  gap: 14px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line);
+}
+.diff-track { position: relative; height: 24px; }
+.diff-track .mid { position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1px solid var(--line-2); }
+.diff-track .dbar { position: absolute; top: 6px; height: 12px; border-radius: 3px; }
+.diff-track .dci { position: absolute; top: 2px; bottom: 2px; border-left: 1.5px dashed var(--line-2); }
+.diff-track .dci.right { border-left: 0; border-right: 1.5px dashed var(--line-2); }
+.diff-val { text-align: right; font-size: 12.6px; }
+.diff-val b { font-size: 14.5px; }
+
+.legend-inline { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.3px; color: var(--ink-2); margin-top: 14px; }
+.legend-inline .row { display: flex; align-items: center; gap: 7px; }
+
+footer { padding: 38px 0 58px; color: var(--ink-3); font-size: 12.3px; }
+footer a { color: var(--ink-2); }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* 進場動畫 */
+@media (prefers-reduced-motion: no-preference) {
+  .view:not([hidden]) .panel, .view:not([hidden]) .hero { animation: rise .42s cubic-bezier(.22,.7,.3,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+}
+
+@media (max-width: 560px) {
+  .hero h1 { font-size: 25px; }
+  .wrap { padding: 0 16px; }
+  .stat { flex: 1 1 40%; }
+  .brand-txt span { display: none; }
+}
+
+@media print {
+  .topbar, .tabs, .btn, .icon-btn { display: none !important; }
+  .view[hidden] { display: block !important; }
+  .panel { box-shadow: none; break-inside: avoid; }
+  body { background: #fff; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <div class="brand">
+      <div class="brand-mark">族</div>
+      <div class="brand-txt">
+        <b>台灣族群分布圖鑑</b>
+        <span>2014 客委會調查 · 單一口徑 · 附完整性查核</span>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="檢視切換">
+      <button class="tab" role="tab" data-view="map" aria-selected="true">地圖探索</button>
+      <button class="tab" role="tab" data-view="rank" aria-selected="false">跨縣市比較</button>
+      <button class="tab" role="tab" data-view="compare" aria-selected="false">兩地對照</button>
+      <button class="tab" role="tab" data-view="data" aria-selected="false">資料與查核</button>
+    </nav>
+    <button class="icon-btn" id="theme-btn" title="切換深淺色" aria-label="切換深淺色">◐</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">2014 客委會調查 · 22 縣市 · 四族群</div>
+        <h1>從地圖看懂<em>族群分布</em></h1>
+        <p class="hero-sub">
+          同一年、同一份問卷、同一套分母。22 個縣市的四族群比例放上真實地理邊界，
+          附樣本數與近似信賴區間，讓「差多少」和「能不能這樣比」同時看得見。
+        </p>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="st-counties">22</b><span>縣市</span></div>
+        <div class="stat"><b id="st-complete">19</b><span>原表 8 欄完整</span></div>
+        <div class="stat"><b id="st-missing">3</b><span>原表缺列</span></div>
+        <div class="stat"><b id="st-sample">78,174</b><span>全國樣本</span></div>
+        <div class="stat"><b id="st-total-sample">—</b><span>縣市樣本合計</span></div>
+        <div class="stat"><b id="st-diff">—</b><span>與舊值不同</span></div>
+      </div>
+    </div>
+    <div class="notice">
+      <span aria-hidden="true">⚠</span>
+      <div>
+        <b>這是 2014 年的認同調查，不是現在的人口普查。</b>
+        四族群之外，原表還有「臺灣人」「其他族群」「不知道／未回答」，全部保留、不分攤回四族群；
+        原住民比例為<b>自我認同</b>，與戶籍身分統計不同；縣市樣本數不等，差距不代表一定顯著。
+        <button class="notice-link" id="goto-method">查看資料口徑與查核 →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 地圖探索 ══════════ -->
+  <section class="view" id="view-map" role="tabpanel">
+    <div class="map-layout">
+      <div class="panel">
+        <div class="panel-hd">
+          <h2>族群分布地圖</h2>
+          <div class="seg" id="group-seg" role="group" aria-label="選擇族群"></div>
+          <div class="seg" id="region-seg" role="group" aria-label="選擇區域"></div>
+          <span class="hint">Tab 移動、Enter 選取</span>
+        </div>
+        <div class="panel-bd tight">
+          <div class="toolbar">
+            <span class="toolbar-label">色階</span>
+            <div class="seg" id="scale-seg" role="group" aria-label="色階範圍"></div>
+            <label class="chk"><input type="checkbox" id="cb-values" checked> 顯示數值</label>
+          </div>
+
+          <p class="map-hint" id="map-hint">← 地圖可左右滑動 →</p>
+          <div class="map-scroll">
+            <div class="map-shell" id="map-shell">
+              <svg id="map" viewBox="0 0 1220 1220" role="group" aria-label="台灣 22 縣市族群比例地圖"></svg>
+              <div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
+            </div>
+          </div>
+
+          <div class="legend">
+            <div>
+              <div class="field-label" id="legend-title">客家（合併）　（%）</div>
+              <div class="ramp" style="margin-top:7px">
+                <div class="ramp-bar" id="ramp-bar"></div>
+              </div>
+              <div class="ramp-ends" style="width:168px;display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:3px">
+                <span id="ramp-lo">0%</span><span id="ramp-hi">70%</span>
+              </div>
+            </div>
+            <div class="legend-key">
+              <div class="row"><span class="hatch-key"></span> 原表缺列（不當作 0%）</div>
+              <div class="row"><span style="width:20px;height:12px;border-radius:3px;border:1px solid var(--line-2);background:var(--surface)"></span> 離島放大框：金門、連江（比例尺各自標示）</div>
+              <div class="row muted">底圖含 1° 經緯網格；圖資 g0v twgeojson（依內政部縣市界圖），已視覺化簡化，非測量用途。</div>
+            </div>
+          </div>
+          <p class="small muted" id="legend-note" style="margin:10px 0 0"></p>
+        </div>
+      </div>
+
+      <aside class="panel sticky-side" id="detail-panel">
+        <div class="panel-hd">
+          <h2>縣市資料</h2>
+          <span class="hint">占該縣市加權調查人口</span>
+        </div>
+        <div class="panel-bd" id="detail-body"></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ══════════ 跨縣市比較 ══════════ -->
+  <section class="view" id="view-rank" role="tabpanel" hidden>
+    <div class="rank-layout">
+      <div class="panel">
+        <div class="panel-hd">
+          <h2 id="rank-title">各縣市排名</h2>
+          <span class="hint">右欄為 ±95% 近似區間</span>
+        </div>
+        <div class="panel-bd tight">
+          <div class="rank-list" id="rank-list"></div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="panel">
+          <div class="panel-hd">
+            <h2>客家 × 原住民 分布關係</h2>
+            <span class="hint">圓面積 ≈ 樣本數；缺列縣市以半透明標示</span>
+          </div>
+          <div class="panel-bd" id="scatter"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd">
+            <h2>四族群多樣性指標</h2>
+            <span class="hint">Simpson 1−Σp²，0＝單一族群・0.75＝四族均分</span>
+          </div>
+          <div class="panel-bd tight">
+            <div class="rank-list" id="diversity-list"></div>
+            <p class="small muted" id="diversity-note" style="margin:10px 6px 0"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:18px">
+      <div class="panel-hd">
+        <h2>22 縣市族群組成（100% 堆疊，依客家比例排序）</h2>
+        <span class="hint">最右欄數字為客家（合併）比例</span>
+      </div>
+      <div class="panel-bd">
+        <div class="chart-wrap">
+          <div class="stack-all" id="stack-all"></div>
+        </div>
+        <div class="legend-inline">
+          <div class="row"><i class="swatch" style="background:var(--g-minnan)"></i>閩南</div>
+          <div class="row"><i class="swatch" style="background:var(--g-hakka)"></i>客家</div>
+          <div class="row"><i class="swatch" style="background:var(--g-mainlander)"></i>外省</div>
+          <div class="row"><i class="swatch" style="background:var(--g-indigenous)"></i>原住民</div>
+          <div class="row"><i class="swatch" style="background:var(--g-taiwanese)"></i>其他／未回答</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 兩地對照 ══════════ -->
+  <section class="view" id="view-compare" role="tabpanel" hidden>
+    <div class="panel">
+      <div class="panel-hd">
+        <h2>兩地對照</h2>
+        <span class="hint">同一年、同一口徑，差距單位為百分點（A − B）</span>
+      </div>
+      <div class="panel-bd">
+        <div class="cmp-head">
+          <div id="cmp-a" style="display:flex;flex-direction:column;gap:5px"></div>
+          <div><button class="btn" id="swap-btn">⇄ 交換</button></div>
+          <div id="cmp-b" style="display:flex;flex-direction:column;gap:5px"></div>
+        </div>
+        <div id="diff-rows"></div>
+
+        <div class="legend-inline" style="margin-top:12px">
+          <div class="row"><span style="display:inline-block;width:14px;height:10px;border:1px solid var(--line-2)"></span>虛線＝差距的近似 95% 區間</div>
+          <div class="row muted">中央豎線為 0。區間不含 0 時標為「差距可能顯著」。</div>
+        </div>
+
+        <div class="note" style="margin-top:16px">
+          <b>統計說明。</b>只比較同一份調查的比例，不把戶籍原住民比例混入。
+          信賴區間採常態近似，<b>未計入加權設計效應與分層抽樣</b>，因此是真實區間的樂觀估計；
+          樣本數愈小（如連江 101 人、澎湖 106 人）估計愈不穩定。此處的「顯著」僅為粗篩，非正式檢定結論。
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:18px">
+      <div class="panel-hd"><h2>兩地並排（100% 堆疊）</h2></div>
+      <div class="panel-bd" id="cmp-side"></div>
+    </div>
+  </section>
+
+  <!-- ══════════ 資料與查核 ══════════ -->
+  <section class="view" id="view-data" role="tabpanel" hidden>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-hd"><h2>官方原始表</h2><span class="hint">唯一權威來源</span></div>
+        <div class="panel-bd small">
+          <p><b>客家委員會 2014 年調查</b><br>
+          《103 年度臺閩地區客家人口推估及客家認同委託研究成果》附表 A-3，PDF 第 126 頁（附錄一-5）。
+          採受訪者<b>居住縣市、單一自我認定</b>，以鄉鎮人口權重推估。</p>
+          <p>全國成功訪問 <b>78,174</b> 人；訪問期間 2014.01.16–02.25，依 2013 年底戶籍人口加權。</p>
+          <p>桃園縣以現名「桃園市」顯示；臺中、臺南、高雄直接採原表合併後縣市值，沒有用舊縣市自行再加權。</p>
+          <p><a href="https://www.hakka.gov.tw/File/Attach/1990/1/491012343871.pdf" target="_blank" rel="noopener">開啟官方原始 PDF ↗</a></p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd"><h2>分類與分母</h2><span class="hint">保留每一種回答</span></div>
+        <div class="panel-bd small">
+          <p><b>閩南</b>＝原表「福老人」。
+          <b>客家</b>＝「臺灣客家人＋大陸客家人」。
+          <b>外省背景</b>＝「大陸各省市人」，不再重複計入大陸客家。
+          <b>原住民</b>＝自我認同，不是戶籍法定身分。</p>
+          <p>分母為該縣市加權調查人口。「臺灣人」「其他族群」「不知道／未回答」另行保留，<b>不分攤回四族群</b>。</p>
+          <p>澎湖、金門、連江的「大陸客家」原表為「—」，<b>保留缺列，不當作確定 0%</b>；
+          這三地的「客家（合併）」因此無法計算，地圖以斜線標示。</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd"><h2>合理性檢查</h2><span class="hint">不強制補成 100%</span></div>
+        <div class="panel-bd small">
+          <p>逐欄檢查 0–100%、原始 8 欄總和、合併後分類是否重複。
+          19 縣市完整列值，列值總和與 100% 的差異均在 8 欄四捨五入容許的 ±0.4 百分點內。</p>
+          <p>未回答比例與四捨五入都須留意。此容許值<b>不是抽樣誤差</b>。</p>
+          <p>原表總計欄皆列 100.0%，本表另計各欄<b>實際總和</b>並公開差異，不重新正規化。</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd"><h2>圖資與免責</h2></div>
+        <div class="panel-bd small">
+          <p>邊界資料：g0v/twgeojson（依內政部縣市界圖），經 Douglas–Peucker 簡化，
+          比例尺以各圖框的中央緯度做等距投影後計算，非測量用途。</p>
+          <p>族群資料是<b>地區層級調查</b>，不能推斷個人的族群身分，也不能解讀為族群「純度」。
+          原表族群分類用語反映 2014 年當時的問卷設計。</p>
+          <p>「臺灣人」為原表獨立回答，不代表所有臺灣居民。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:18px">
+      <div class="panel-hd">
+        <h2>22 縣市統一資料表</h2>
+        <span class="hint" id="table-count">22 / 22 縣市</span>
+      </div>
+      <div class="panel-bd">
+        <div class="ctl-row" style="margin-bottom:12px">
+          <div class="field">
+            <span class="field-label">搜尋</span>
+            <input type="search" id="table-search" placeholder="縣市或區域名稱">
+          </div>
+          <div class="field">
+            <span class="field-label">篩選</span>
+            <label class="chk"><input type="checkbox" id="cb-complete"> 只看原表完整縣市</label>
+          </div>
+          <div class="field" style="margin-left:auto">
+            <span class="field-label">匯出</span>
+            <div class="btn-row">
+              <button class="btn" id="exp-csv">下載 CSV</button>
+              <button class="btn" id="exp-json">下載 JSON</button>
+            </div>
+          </div>
+        </div>
+        <p class="small muted">† 客家（合併）＝臺灣客家人＋大陸客家人；大陸客家人原表缺列時不計算。
+        點欄位標題可排序；比例為原表列值加總，未正規化。</p>
+        <div class="tbl-scroll" id="data-table"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:18px">
+      <div class="panel-hd">
+        <h2>先前數據核對紀錄</h2>
+        <span class="hint">原值保留供核對；主圖採官方同口徑值</span>
+      </div>
+      <div class="panel-bd">
+        <p class="small" id="prior-summary"></p>
+        <p class="small muted">每組順序：閩南／客家／外省／原住民。先前資料來自對話紀錄，未當作權威資料源；
+        差異可能涉及年份、分類、轉錄或舊行政區合併方式，一律以本次直接核實的 A-3 為準。</p>
+        <div class="tbl-scroll" style="max-height:420px" id="prior-table"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <p>台灣族群分布圖鑑 · 2014 客委會調查快照 ·
+  <span id="foot-complete">19</span> 縣市原表完整 · <span id="foot-missing">3</span> 縣市原表缺列</p>
+  <p>族群資料來源：<a href="https://www.hakka.gov.tw/File/Attach/1990/1/491012343871.pdf" target="_blank" rel="noopener">客家委員會《103 年度臺閩地區客家人口推估及客家認同委託研究成果》附表 A-3</a>　·　
+  圖資：g0v/twgeojson（依內政部縣市界圖）</p>
+</footer>
+
+<script>window.MAPDATA = {"main":{"paths":{"基隆市":{"d":"M1110.1,78.5L1111.5,77.8L1113.0,79.3L1114.5,79.3L1116.5,77.3L1116.9,78.3L1118.9,78.0L1119.0,76.9L1119.8,76.8L1121.8,78.2L1124.5,78.4L1121.0,80.0L1122.5,79.6L1123.4,80.8L1122.8,79.4L1123.7,81.0L1127.6,82.1L1127.0,82.6L1126.0,81.8L1125.8,82.5L1126.9,83.4L1127.9,82.8L1127.5,83.3L1128.3,83.1L1128.8,84.7L1129.3,83.7L1127.9,82.1L1133.3,82.5L1131.5,84.4L1132.1,85.6L1131.5,86.8L1132.4,88.2L1131.7,91.0L1129.0,89.6L1128.9,90.6L1130.4,92.0L1130.0,93.7L1127.7,94.4L1126.3,92.3L1125.5,92.9L1122.5,91.6L1120.4,94.3L1115.1,95.2L1116.0,96.2L1117.0,95.6L1117.2,97.9L1118.2,98.3L1117.7,100.5L1118.6,105.7L1121.2,106.1L1123.1,108.7L1121.9,111.1L1119.5,113.0L1117.3,112.4L1113.0,114.7L1111.2,113.9L1108.9,114.4L1103.4,109.4L1099.4,109.6L1095.9,108.1L1093.0,105.8L1093.6,102.6L1091.4,104.3L1085.7,100.8L1083.6,97.9L1084.6,96.9L1082.7,93.9L1081.8,89.1L1078.6,88.0L1076.6,85.0L1080.7,82.9L1083.8,83.2L1086.5,80.7L1092.5,79.5L1096.8,75.9L1099.2,75.6L1100.2,73.5L1102.4,72.6L1101.8,76.4L1104.7,75.9L1109.0,76.8L1110.1,78.5Z","cx":1110.9,"cy":88.8,"w":56.6,"h":48.8,"bx":1076.6,"by":66.0,"x2":1133.3,"y2":114.7},"臺北市":{"d":"M1055.5,61.0L1056.6,61.2L1057.3,64.1L1059.5,66.0L1063.2,66.3L1062.3,70.6L1063.1,72.3L1061.1,75.7L1065.1,76.8L1065.7,79.5L1065.0,80.7L1066.3,81.4L1067.8,84.8L1070.1,86.0L1069.7,88.0L1070.7,88.2L1068.8,89.7L1066.9,93.7L1067.5,95.3L1073.0,97.2L1076.5,99.9L1077.0,104.2L1075.8,105.2L1075.7,107.4L1074.7,107.6L1075.0,108.9L1073.3,110.8L1075.8,113.6L1074.7,113.3L1074.8,114.4L1073.4,115.4L1074.2,117.8L1076.0,119.7L1078.8,120.4L1082.9,123.1L1088.9,122.4L1088.0,124.8L1085.1,124.3L1082.7,125.2L1081.7,124.2L1079.4,124.7L1078.4,123.9L1077.3,125.8L1075.5,126.7L1071.2,125.5L1069.6,126.1L1069.1,127.5L1067.5,127.6L1067.0,131.0L1068.4,132.2L1067.7,134.5L1068.9,135.9L1068.1,140.1L1074.5,143.0L1074.4,143.8L1068.7,145.9L1061.6,144.0L1060.3,143.9L1059.7,144.9L1056.2,144.6L1053.8,140.3L1053.5,137.1L1051.1,138.2L1050.8,136.6L1048.6,136.5L1048.1,134.3L1045.4,137.0L1047.2,132.3L1047.1,130.0L1042.8,125.8L1040.0,125.3L1037.1,128.5L1034.8,129.4L1033.4,127.3L1032.8,121.4L1034.0,119.2L1038.1,116.1L1039.2,110.6L1039.0,107.1L1037.0,102.9L1033.5,99.5L1031.1,98.2L1026.5,97.9L1023.7,95.6L1024.9,93.0L1024.2,90.7L1026.1,90.3L1026.3,87.7L1031.7,81.4L1033.1,81.0L1037.9,73.6L1040.3,74.9L1043.3,74.9L1043.8,71.6L1045.2,70.2L1049.9,68.8L1050.6,66.5L1052.1,65.1L1053.3,65.2L1053.2,63.3L1055.5,61.0Z","cx":1061.8,"cy":106.8,"w":65.2,"h":85.1,"bx":1023.7,"by":61.0,"x2":1088.9,"y2":146.1},"新北市":{"d":"M1128.7,166.8L1127.6,168.9L1125.0,170.3L1125.2,173.7L1126.1,175.4L1123.6,176.6L1123.1,178.6L1120.8,178.4L1119.6,180.3L1118.7,180.3L1118.6,181.4L1113.8,182.7L1109.0,181.9L1104.0,186.5L1102.3,186.9L1100.1,189.0L1098.4,188.9L1098.3,190.6L1095.6,192.3L1096.4,193.4L1095.9,195.2L1093.6,194.8L1091.5,195.9L1089.8,194.6L1087.2,197.1L1083.1,196.0L1082.3,197.6L1080.4,197.1L1076.3,197.8L1076.2,202.4L1074.9,203.3L1071.3,202.9L1070.1,204.4L1065.8,204.9L1067.5,210.2L1064.8,216.0L1065.3,217.4L1067.1,218.4L1065.7,219.6L1066.8,221.2L1066.3,224.7L1067.6,224.9L1067.5,225.4L1064.2,228.0L1061.5,227.2L1060.4,231.4L1059.0,230.1L1058.2,230.9L1054.7,231.0L1052.9,232.9L1050.6,232.9L1048.9,234.9L1048.5,238.8L1045.8,238.6L1044.5,240.5L1040.7,240.2L1034.9,243.9L1033.1,243.3L1030.8,243.8L1028.9,239.9L1029.0,236.2L1027.5,236.1L1025.4,234.3L1021.5,232.9L1018.6,226.0L1016.5,224.5L1016.9,223.5L1014.7,216.6L1013.1,213.7L1014.1,211.7L1017.3,209.7L1021.3,205.5L1021.6,203.8L1020.1,204.1L1017.6,202.0L1017.3,196.6L1015.0,195.5L1013.2,192.1L1011.2,192.1L1010.2,189.9L1010.7,188.6L1006.8,185.9L1005.8,186.6L1004.2,185.8L1002.1,186.3L1000.6,188.2L997.6,189.4L992.7,187.3L991.7,185.8L989.2,185.1L985.9,185.8L986.2,184.3L989.6,183.4L989.8,184.3L991.0,184.0L991.7,182.6L992.7,182.6L989.7,180.1L988.7,177.9L991.6,175.7L991.3,174.6L988.9,173.5L988.6,171.5L987.5,170.8L987.8,169.2L985.1,169.6L985.0,166.9L983.0,168.1L981.0,166.6L982.8,163.6L980.1,161.1L982.3,158.7L985.6,158.2L987.0,157.0L981.5,157.1L981.8,156.0L979.5,153.6L984.5,151.1L983.3,149.9L983.4,142.1L982.0,141.9L983.5,140.7L983.2,139.9L987.9,138.6L989.3,139.8L990.9,139.1L991.5,140.2L994.6,139.6L996.3,140.5L1001.3,137.4L1000.9,134.1L1004.0,134.9L1004.8,133.5L1006.8,132.9L1005.7,130.3L1003.1,128.5L1003.6,127.3L1009.6,126.1L1005.3,122.4L1006.2,119.7L1002.9,118.3L1006.0,117.9L1005.3,117.6L1006.8,117.0L1005.8,117.3L1005.1,116.8L1005.6,116.3L1003.9,115.9L1005.4,116.1L1005.1,115.4L1005.8,115.8L1006.1,115.1L1003.0,114.4L1003.5,113.8L1001.0,114.7L1001.9,113.9L1001.3,112.8L1002.3,113.2L1002.6,112.5L1002.0,112.3L1003.0,111.9L1002.2,111.1L998.6,110.1L991.8,110.4L991.4,109.2L989.1,108.7L991.3,107.6L990.2,107.5L990.2,106.5L989.6,107.5L987.3,107.4L987.2,106.6L988.5,107.0L989.0,106.8L988.4,106.0L989.6,105.8L987.9,105.3L990.0,104.5L986.6,104.1L982.4,101.1L975.5,99.6L974.1,97.0L972.0,97.6L971.6,96.2L969.2,95.2L969.5,92.6L972.8,91.8L973.5,89.8L974.2,90.6L973.6,89.6L974.4,90.5L975.9,90.4L976.1,89.6L977.9,89.7L977.8,90.6L984.9,90.2L1001.6,83.1L1002.7,82.4L1002.0,80.8L1002.7,82.3L1004.5,81.2L1004.1,78.8L1004.6,80.8L1006.4,78.6L1005.2,77.4L1004.5,78.2L1005.2,77.4L1003.2,75.4L1006.5,78.5L1008.7,76.5L1007.6,75.4L1008.8,76.5L1009.8,75.4L1007.8,73.4L1007.5,70.6L1010.1,70.0L1007.4,70.1L1008.6,68.5L1012.1,67.1L1011.4,66.4L1013.6,62.9L1016.2,59.0L1018.4,57.5L1018.7,54.6L1020.3,53.5L1019.7,52.8L1021.0,49.9L1020.7,48.8L1022.6,47.0L1026.8,47.4L1026.7,46.7L1028.6,46.0L1028.5,45.0L1029.2,45.5L1030.6,43.0L1030.5,41.3L1040.3,35.9L1039.9,33.6L1041.0,33.5L1041.4,35.5L1045.6,35.2L1047.9,33.6L1047.3,32.0L1048.7,30.3L1049.7,32.1L1051.9,33.2L1057.0,32.6L1057.7,33.3L1058.3,31.1L1061.1,30.9L1064.3,33.1L1067.6,33.3L1066.7,33.6L1067.5,33.5L1070.5,36.8L1073.8,38.0L1077.9,42.2L1079.2,47.1L1078.9,51.0L1081.7,54.0L1083.6,54.2L1082.6,55.0L1083.8,54.3L1082.9,53.2L1084.4,53.1L1084.2,53.9L1085.1,54.5L1083.7,56.4L1087.6,61.8L1090.7,63.7L1092.6,62.5L1092.7,63.9L1095.2,61.6L1095.3,63.3L1096.2,62.5L1095.9,61.6L1097.2,61.8L1098.4,59.7L1100.1,58.7L1097.2,62.0L1097.4,63.0L1096.8,63.1L1097.9,63.5L1094.9,67.6L1097.2,71.2L1098.7,71.2L1098.5,70.3L1100.5,72.5L1102.3,72.8L1100.2,73.5L1099.2,75.6L1096.8,75.9L1092.5,79.5L1086.5,80.7L1083.8,83.2L1080.7,82.9L1076.7,85.0L1078.6,88.0L1081.8,89.1L1082.7,93.9L1084.6,96.9L1083.6,97.9L1086.5,101.4L1091.4,104.3L1093.6,102.6L1093.0,105.8L1095.9,108.1L1099.4,109.6L1103.4,109.4L1108.9,114.4L1111.2,113.9L1113.0,114.7L1117.3,112.4L1119.5,113.0L1121.9,111.1L1123.1,108.7L1121.2,106.1L1118.6,105.7L1117.7,100.5L1118.2,98.3L1117.2,97.9L1117.0,95.6L1116.0,96.2L1115.1,95.2L1120.4,94.3L1122.5,91.6L1125.5,92.9L1126.3,92.3L1127.6,94.3L1129.1,94.2L1130.0,93.7L1130.4,92.0L1128.9,90.6L1129.0,89.5L1131.5,91.1L1132.3,89.9L1131.7,86.3L1134.1,87.4L1139.0,86.3L1138.2,87.7L1137.3,86.9L1136.6,88.4L1137.5,88.1L1136.4,88.8L1136.9,88.6L1136.5,89.4L1137.5,91.3L1139.5,91.1L1139.0,90.3L1139.4,89.9L1139.5,90.8L1140.1,90.1L1139.7,89.1L1143.8,88.7L1148.8,90.2L1150.2,89.5L1151.4,91.0L1153.9,89.8L1154.7,90.7L1157.1,90.4L1158.8,91.8L1161.4,91.9L1163.4,90.5L1164.3,91.2L1166.2,90.0L1167.0,90.9L1166.9,89.4L1169.4,88.4L1169.3,90.6L1165.9,93.9L1167.0,94.5L1168.8,93.9L1169.5,97.3L1168.1,97.6L1167.3,99.4L1167.7,100.4L1166.0,102.5L1167.0,104.8L1166.8,106.7L1168.0,106.8L1170.0,109.9L1171.8,111.1L1171.7,112.1L1169.9,112.9L1171.7,113.4L1170.5,118.9L1172.0,121.5L1176.7,125.8L1178.3,125.3L1177.5,125.0L1181.4,125.2L1185.9,123.7L1190.0,125.4L1190.2,128.5L1192.5,125.7L1193.8,127.9L1194.9,127.6L1195.3,129.7L1194.7,129.7L1194.6,131.7L1191.9,132.0L1189.0,134.0L1188.2,135.6L1186.1,135.4L1185.6,136.9L1184.4,137.9L1183.3,137.6L1182.8,138.6L1181.0,136.6L1175.9,136.6L1172.4,139.1L1166.6,139.6L1165.2,141.2L1162.8,141.3L1161.0,143.8L1158.4,145.1L1156.5,144.8L1153.1,146.0L1149.8,145.0L1147.2,146.4L1145.4,146.1L1143.7,148.1L1142.9,151.4L1144.0,153.2L1145.3,153.8L1147.5,158.1L1140.6,165.0L1136.4,165.7L1134.4,164.5L1132.2,166.3L1128.7,166.8ZM1045.6,137.0L1048.1,134.3L1048.6,136.5L1050.8,136.6L1051.1,138.2L1053.5,137.1L1053.8,140.3L1056.2,144.6L1059.7,144.9L1060.3,143.9L1061.6,144.0L1068.7,145.9L1074.4,143.8L1074.5,143.0L1068.1,140.1L1068.9,135.9L1067.7,134.5L1068.4,132.2L1067.0,131.0L1067.5,127.6L1069.1,127.5L1069.6,126.1L1071.2,125.5L1075.5,126.7L1077.3,125.8L1078.4,123.9L1079.4,124.7L1081.7,124.2L1082.7,125.2L1085.1,124.3L1088.0,124.8L1088.7,123.8L1088.9,122.4L1087.4,122.2L1085.5,123.2L1082.8,123.0L1078.8,120.4L1076.0,119.7L1074.2,117.8L1073.4,115.4L1074.8,114.4L1074.7,113.3L1075.8,113.6L1073.3,110.8L1075.0,108.9L1074.7,107.6L1075.7,107.4L1075.8,105.2L1077.0,104.2L1076.5,99.9L1073.0,97.2L1067.5,95.3L1066.9,93.7L1068.8,89.7L1070.7,88.2L1069.7,88.0L1070.1,86.0L1067.8,84.8L1066.3,81.4L1065.0,80.7L1065.7,79.5L1065.1,76.8L1061.1,75.7L1063.1,72.3L1062.3,70.6L1063.2,66.3L1059.5,66.0L1057.3,64.1L1056.6,61.2L1055.7,61.0L1054.2,61.6L1053.2,63.4L1053.4,64.9L1051.0,65.9L1049.9,68.8L1045.2,70.2L1043.8,71.6L1044.1,73.1L1043.3,74.9L1040.3,74.9L1037.9,73.6L1033.1,81.0L1031.7,81.4L1026.3,87.7L1026.1,90.3L1024.2,90.7L1024.9,93.0L1023.7,95.5L1024.6,96.9L1026.6,98.0L1031.1,98.2L1033.5,99.5L1037.0,102.9L1039.0,107.1L1039.2,110.6L1038.1,116.1L1034.0,119.2L1032.8,121.4L1033.5,127.6L1035.6,129.4L1040.0,125.3L1043.2,126.1L1047.2,130.2L1045.6,137.0Z","cx":1088.7,"cy":113.4,"w":226.2,"h":214.0,"bx":969.2,"by":30.0,"x2":1195.4,"y2":244.0},"桃園市":{"d":"M940.2,100.7L942.9,97.9L947.2,95.5L955.7,93.4L955.6,91.5L955.8,93.5L957.9,92.4L956.2,92.2L955.8,90.6L957.1,92.2L962.2,91.0L969.5,92.6L969.2,95.2L971.6,96.2L972.0,97.6L974.1,97.0L975.5,99.6L982.4,101.1L986.6,104.1L990.0,104.5L987.9,105.3L989.6,105.8L988.4,106.0L989.0,106.8L988.5,107.0L987.2,106.6L987.3,107.4L989.6,107.5L990.2,106.5L990.2,107.5L991.3,107.6L989.1,108.7L991.4,109.2L991.8,110.4L998.6,110.1L1002.2,111.1L1003.0,111.9L1002.0,112.3L1002.6,112.5L1002.3,113.2L1001.3,112.8L1001.9,113.9L1001.0,114.7L1003.6,113.8L1003.0,114.4L1006.1,115.1L1005.8,115.8L1005.1,115.4L1005.4,116.1L1004.0,115.4L1004.1,116.4L1006.8,117.0L1005.3,117.6L1005.9,117.9L1002.9,118.3L1006.2,119.7L1005.3,122.4L1009.6,126.0L1003.5,127.3L1003.1,128.5L1005.7,130.2L1006.8,132.9L1004.8,133.5L1004.0,134.9L1000.9,134.1L1001.3,137.4L996.2,140.5L994.6,139.6L991.5,140.2L990.9,139.1L989.3,139.8L987.9,138.6L983.1,140.0L983.5,140.7L982.0,142.2L983.4,142.1L983.3,149.9L984.5,151.1L979.5,153.6L981.8,156.0L981.5,157.1L987.0,157.0L985.6,158.2L982.3,158.7L980.1,161.1L982.8,163.6L981.0,166.6L983.0,168.1L985.0,166.9L985.1,169.6L987.8,169.2L987.5,170.8L988.6,171.5L988.9,173.5L991.3,174.6L991.6,175.7L988.7,177.9L989.7,180.1L992.7,182.6L991.7,182.6L991.0,184.0L989.8,184.3L989.6,183.4L986.2,184.3L985.9,185.8L989.2,185.1L991.7,185.8L992.7,187.3L997.6,189.4L1003.8,185.8L1008.1,186.6L1010.7,188.6L1010.2,189.9L1011.2,192.1L1013.2,192.1L1015.0,195.5L1017.3,196.6L1017.7,202.3L1020.1,204.1L1021.6,203.8L1020.2,206.9L1014.2,211.6L1013.1,213.7L1014.7,216.6L1016.9,223.5L1016.5,224.5L1018.6,226.0L1021.5,232.9L1025.4,234.3L1027.5,236.1L1029.0,236.2L1028.9,239.9L1030.8,243.8L1024.3,244.1L1022.6,247.0L1021.2,247.8L1020.7,249.7L1021.9,251.5L1019.9,254.2L1019.9,256.2L1018.5,256.9L1017.1,259.6L1017.0,261.6L1014.5,266.9L1011.6,268.5L1009.8,267.7L1006.8,271.7L1004.0,273.3L1001.8,273.5L997.4,271.0L997.0,269.9L994.4,267.8L994.6,266.5L993.0,263.1L994.3,261.8L995.3,258.1L992.7,257.4L992.1,254.9L991.0,254.1L991.3,245.8L988.8,246.3L988.2,245.3L986.9,246.2L986.7,241.8L982.1,236.5L980.0,235.5L975.8,237.2L974.5,236.4L977.0,228.0L976.3,225.9L974.0,223.7L977.0,216.1L975.0,213.3L972.7,213.0L972.3,211.8L970.1,210.9L967.4,210.6L965.7,209.3L965.5,208.2L962.1,206.9L961.6,205.6L962.3,203.2L958.3,201.9L958.2,199.5L957.0,197.8L955.3,199.2L950.1,201.0L949.5,196.7L944.9,198.3L944.3,197.3L945.2,196.5L944.4,194.8L943.0,195.7L939.3,192.8L935.2,191.3L936.0,189.8L930.9,188.0L929.1,185.7L927.8,185.6L930.0,182.9L929.8,181.7L931.3,180.5L929.6,173.3L926.1,173.4L924.4,172.7L923.3,174.2L917.3,172.9L914.6,171.4L915.6,169.7L915.0,167.4L909.4,168.9L907.0,167.1L903.1,166.9L902.5,165.7L899.0,164.8L900.0,158.6L898.9,156.3L899.2,154.2L896.1,153.2L895.4,151.8L893.6,151.9L892.8,150.9L890.0,151.3L889.0,152.9L887.0,152.9L883.2,150.9L881.9,153.0L879.2,153.3L878.7,154.7L876.6,153.2L878.1,150.1L881.7,146.9L884.8,141.4L884.2,137.0L884.9,136.5L884.0,136.2L886.6,136.6L883.9,135.9L886.3,134.0L890.3,125.9L897.1,118.3L902.9,116.9L905.3,115.0L906.8,114.9L909.4,111.5L918.4,107.1L930.8,104.6L940.2,100.7Z","cx":962.8,"cy":161.7,"w":154.2,"h":182.9,"bx":876.6,"by":90.6,"x2":1030.8,"y2":273.5},"新竹縣":{"d":"M865.1,172.9L866.3,169.2L868.7,166.1L868.3,165.5L869.2,164.9L872.2,156.9L875.1,153.2L877.0,153.4L878.7,154.7L879.2,153.3L881.9,153.0L883.2,150.9L887.0,152.9L889.0,152.9L890.0,151.3L892.9,150.9L893.6,151.9L895.4,151.8L896.1,153.2L899.2,154.2L898.9,156.3L900.0,158.6L899.0,164.8L902.5,165.7L903.1,166.9L907.0,167.1L909.4,168.9L915.0,167.4L915.6,169.7L914.6,171.4L917.3,172.9L923.3,174.2L924.4,172.7L926.1,173.4L929.6,173.3L931.3,180.5L929.8,181.7L930.0,182.9L927.8,185.6L929.1,185.7L930.9,188.0L936.0,189.8L935.2,191.3L939.3,192.8L943.0,195.7L944.4,194.8L945.2,196.5L944.3,197.3L944.9,198.3L949.5,196.7L950.1,201.0L955.3,199.2L957.0,197.8L958.2,199.5L958.3,201.9L962.3,203.2L961.6,205.6L962.1,206.9L965.5,208.2L965.7,209.3L967.4,210.6L972.1,211.7L972.7,213.0L975.1,213.4L977.0,216.1L974.0,223.7L976.3,225.9L977.0,228.0L974.5,236.4L975.8,237.2L980.0,235.5L982.1,236.5L986.7,241.8L986.9,246.2L988.2,245.3L988.8,246.3L991.3,245.8L991.0,254.1L992.1,254.9L992.7,257.4L995.3,258.1L994.3,261.8L993.0,263.1L994.6,266.5L994.4,267.8L997.0,269.9L997.4,271.0L1001.8,273.5L1006.8,271.7L1009.7,277.9L1007.0,279.5L1006.3,281.8L1004.2,283.9L1005.4,286.6L1004.8,289.4L1006.3,293.1L1005.1,294.5L1002.9,295.1L1002.2,297.0L1001.2,297.2L1000.7,299.5L997.5,299.6L996.9,303.5L994.6,304.6L992.6,307.6L988.0,309.1L987.2,311.5L985.7,312.5L985.9,314.1L982.4,317.1L978.5,324.3L976.1,325.8L965.5,326.9L965.0,327.7L962.0,327.1L961.5,323.4L962.9,318.2L961.5,317.5L961.5,315.4L957.3,313.2L956.9,310.6L954.2,308.5L954.2,307.1L952.7,306.7L952.4,305.6L949.2,303.5L950.8,300.8L948.8,299.7L948.4,297.7L946.4,299.0L943.6,299.1L942.0,300.5L939.3,301.1L937.1,300.2L933.8,302.1L928.0,300.9L926.2,298.9L923.7,300.7L921.4,300.7L919.4,299.5L917.4,300.1L914.9,302.6L911.6,304.2L907.5,302.5L903.4,303.5L903.4,301.8L902.2,300.6L901.9,295.2L905.4,293.2L906.1,289.0L903.9,286.1L898.6,282.8L900.0,282.5L900.5,283.4L903.0,281.4L904.5,275.4L906.9,272.3L906.3,268.7L904.5,267.5L904.4,264.8L902.1,263.8L900.4,261.5L897.1,263.7L894.5,259.7L889.1,256.7L888.9,254.9L885.4,255.0L883.5,253.8L884.2,249.7L880.1,250.3L879.4,248.7L878.0,248.3L878.0,246.8L876.8,247.1L875.2,244.4L873.8,243.8L873.3,240.1L869.8,240.4L870.5,237.8L872.8,235.9L872.3,233.6L873.7,232.6L872.8,230.8L870.4,231.5L869.5,230.9L866.4,233.4L865.3,231.0L862.9,232.3L860.8,230.6L861.8,229.1L861.6,224.8L862.8,225.1L862.2,223.7L863.5,219.7L866.6,220.0L867.7,219.3L867.6,217.9L870.8,215.6L871.5,212.6L874.5,213.2L875.3,211.8L877.3,211.6L876.6,210.0L875.7,209.9L876.5,208.6L877.9,208.6L878.8,207.4L884.0,209.7L886.7,213.1L887.4,215.5L889.6,215.0L891.4,213.1L890.3,212.1L890.2,208.6L888.7,207.5L889.5,206.6L888.1,205.8L888.6,204.5L887.4,202.8L888.2,202.1L887.4,201.2L889.0,201.1L883.5,195.2L881.0,193.2L877.2,192.1L875.6,190.2L873.1,190.6L867.0,189.0L863.7,186.8L862.4,183.8L860.2,182.8L860.2,179.7L863.6,175.8L865.1,172.9Z","cx":919.9,"cy":230.7,"w":150.0,"h":176.8,"bx":859.7,"by":150.9,"x2":1009.7,"y2":327.7},"新竹市":{"d":"M853.1,191.5L856.3,186.0L853.9,183.1L857.0,185.5L856.7,184.8L857.7,183.7L856.9,183.3L856.4,184.5L854.1,182.3L855.2,183.0L855.5,182.4L856.0,183.5L858.5,183.0L860.1,185.9L860.7,185.2L860.2,182.8L860.8,182.9L862.5,183.9L863.7,186.8L867.0,189.0L873.1,190.6L875.6,190.2L877.2,192.1L881.1,193.3L889.0,201.1L887.4,201.2L888.2,202.1L887.4,202.8L888.6,204.5L888.1,205.8L889.5,206.6L888.7,207.5L890.2,208.6L889.7,209.9L891.2,213.7L889.6,215.0L887.4,215.5L885.2,210.7L878.8,207.4L875.7,209.8L876.6,210.0L877.3,211.6L875.3,211.8L874.5,213.2L871.5,212.6L870.8,215.6L867.6,217.9L867.7,219.3L866.6,220.0L863.5,219.7L862.2,223.7L862.8,225.1L861.6,224.8L861.8,229.1L860.8,230.5L859.2,229.2L857.1,229.9L854.0,228.9L854.8,227.5L852.2,220.8L848.2,223.7L843.8,223.5L843.0,222.8L844.6,219.9L849.6,214.4L847.0,209.3L847.4,204.7L850.8,194.8L853.1,191.5Z","cx":864.8,"cy":208.3,"w":48.4,"h":48.2,"bx":843.0,"by":182.3,"x2":891.4,"y2":230.5},"苗栗縣":{"d":"M944.4,298.7L946.3,299.1L948.6,297.8L948.8,299.7L950.8,300.8L949.2,303.5L952.4,305.6L952.7,306.7L954.2,307.1L954.2,308.5L956.9,310.6L957.3,313.2L961.5,315.4L961.5,317.5L962.9,318.2L961.5,323.4L962.0,327.1L961.2,328.4L958.8,328.5L956.9,330.1L956.3,332.2L956.8,335.0L954.0,337.9L953.2,342.5L948.2,344.0L946.4,338.4L945.3,337.7L942.3,338.2L942.2,339.9L940.1,343.3L938.0,343.5L934.9,346.1L935.2,347.6L933.4,350.3L927.1,351.4L924.8,350.8L921.8,354.3L921.0,356.6L919.7,357.2L918.8,360.7L916.7,361.4L914.7,360.6L912.8,362.7L908.1,365.2L906.3,362.9L903.7,363.3L903.9,364.6L902.8,365.8L898.3,367.5L897.1,371.6L895.0,372.7L891.6,371.9L890.0,369.4L887.1,367.9L885.4,364.2L882.1,360.0L878.4,361.0L876.4,360.3L875.3,358.9L870.5,359.7L868.5,359.2L867.4,357.7L863.0,357.8L860.9,356.5L854.8,359.3L856.7,369.7L853.4,373.1L850.6,373.8L842.1,372.8L834.2,375.0L829.0,374.4L820.6,365.8L813.5,364.9L806.9,362.2L796.8,353.5L789.5,351.4L789.6,350.1L785.0,348.2L784.1,345.8L780.2,342.5L780.6,341.5L778.0,339.9L775.9,336.3L770.4,332.9L768.4,327.6L766.0,326.0L765.0,324.1L762.7,323.1L764.8,321.4L764.3,322.7L765.3,322.5L764.8,321.5L765.8,322.1L765.0,321.4L766.0,321.3L765.8,320.7L766.7,321.7L765.9,320.5L770.8,316.1L772.1,316.4L770.6,315.9L772.7,315.7L771.5,314.7L776.6,309.1L776.3,308.3L777.1,308.5L777.5,307.0L776.4,307.3L778.0,303.5L779.3,304.5L780.2,304.1L777.7,303.3L783.2,295.1L785.4,287.4L790.3,276.7L790.8,273.7L794.5,267.0L798.8,264.8L800.9,265.3L800.6,266.0L801.5,266.3L804.0,264.1L805.7,264.4L805.5,261.3L803.2,262.4L806.0,258.1L806.5,255.5L809.4,252.1L808.8,251.2L810.0,251.8L808.7,250.3L809.7,250.9L810.8,250.3L813.2,247.7L823.6,245.4L825.4,245.5L825.4,246.3L825.7,245.5L827.5,245.2L829.0,241.5L836.1,235.5L835.7,234.8L836.6,235.2L835.6,234.2L837.2,234.7L836.7,234.3L839.1,226.5L843.0,222.8L847.8,223.8L852.0,220.8L854.8,227.5L854.0,228.9L857.1,229.9L859.2,229.2L862.9,232.3L865.3,231.0L866.4,233.4L869.5,230.9L870.4,231.5L872.1,230.6L873.2,231.1L873.7,232.6L872.3,233.7L872.8,235.9L870.5,237.8L869.8,240.4L873.3,240.1L873.8,243.8L875.2,244.4L876.8,247.1L878.0,246.8L878.0,248.3L879.4,248.7L880.1,250.3L884.2,249.7L883.5,253.8L885.4,255.0L888.9,254.9L889.1,256.7L894.5,259.7L897.1,263.7L900.4,261.5L902.1,263.8L904.3,264.7L904.5,267.5L906.3,268.7L906.9,272.3L904.5,275.4L903.0,281.4L900.5,283.4L900.0,282.5L898.6,282.8L903.9,286.1L906.1,289.0L905.4,293.2L901.9,295.2L902.2,300.6L903.4,301.8L903.4,303.5L907.5,302.5L911.6,304.2L919.4,299.5L921.4,300.7L923.7,300.7L926.2,298.9L928.0,300.9L933.8,302.1L937.1,300.2L939.3,301.1L942.0,300.5L944.4,298.7Z","cx":844.4,"cy":295.2,"w":200.3,"h":154.2,"bx":762.7,"by":220.8,"x2":962.9,"y2":375.0},"臺中市":{"d":"M719.3,392.7L718.3,392.2L717.6,393.7L718.2,392.1L719.4,392.5L721.9,386.4L720.5,385.7L721.4,386.0L722.7,382.7L724.3,383.4L727.3,376.8L725.6,375.8L724.3,372.9L722.6,372.0L728.3,373.6L731.1,371.3L732.6,368.3L732.7,367.6L730.9,366.7L733.7,366.4L738.0,369.0L740.3,369.1L739.2,368.4L740.5,365.6L738.9,364.2L737.2,364.2L736.9,363.4L741.4,362.7L740.5,361.0L741.8,360.8L740.8,360.1L741.6,360.1L741.2,359.3L742.2,359.4L741.3,358.8L742.1,358.9L741.5,358.7L741.9,357.4L742.8,357.0L744.0,350.8L748.5,345.9L751.5,340.5L752.5,340.5L751.9,339.9L752.9,336.5L754.7,333.6L760.4,327.0L761.7,327.7L760.6,326.8L762.7,323.1L765.0,324.1L766.0,326.0L768.4,327.6L770.4,332.9L775.9,336.3L778.0,339.9L780.6,341.5L780.2,342.5L784.1,345.8L785.0,348.2L789.6,350.1L789.5,351.4L796.8,353.5L806.9,362.2L813.5,364.9L820.6,365.8L824.0,368.6L826.4,372.2L830.3,374.7L836.1,374.9L842.1,372.8L850.6,373.8L853.4,373.1L856.7,369.7L854.8,359.3L860.9,356.5L863.0,357.8L867.4,357.7L868.5,359.2L870.5,359.7L875.3,358.9L876.4,360.3L878.4,361.0L882.1,360.0L885.4,364.2L886.5,367.2L890.0,369.4L891.5,371.8L896.3,372.5L898.2,367.6L902.8,365.8L903.9,364.6L903.7,363.3L906.3,362.9L907.9,365.1L909.6,364.8L914.7,360.6L916.7,361.4L918.9,360.6L919.7,357.2L921.0,356.6L921.8,354.3L924.8,350.8L927.1,351.4L933.4,350.3L935.2,347.6L934.9,346.1L938.0,343.5L940.1,343.3L942.2,339.9L942.3,338.2L945.3,337.7L946.4,338.4L948.2,344.0L953.1,342.5L954.0,337.9L956.8,335.0L956.3,332.2L957.5,329.3L961.2,328.4L962.0,327.1L965.0,327.7L965.5,326.9L976.1,325.8L979.8,322.8L981.2,323.2L983.2,325.7L982.9,332.5L982.1,334.5L982.9,337.4L984.4,337.6L986.6,340.5L987.9,339.3L991.3,339.2L994.6,340.6L996.2,342.8L995.3,344.1L996.0,346.3L997.4,347.8L1000.0,348.1L1001.7,347.2L1002.5,345.3L1005.8,343.8L1008.0,344.5L1016.0,342.5L1017.5,342.7L1018.9,346.0L1020.5,345.4L1021.8,348.8L1020.3,350.6L1018.5,350.9L1016.7,354.7L1017.4,356.5L1015.8,360.5L1016.4,363.5L1014.4,365.1L1012.5,368.3L1007.2,368.1L1006.7,372.0L1004.5,374.8L1002.8,374.4L999.6,377.8L1001.2,383.2L1001.0,386.3L995.4,387.2L993.5,390.0L990.9,390.1L990.8,393.3L987.9,397.0L982.8,393.9L980.6,394.2L978.6,393.1L975.8,393.5L974.9,392.5L972.4,395.1L968.3,394.9L967.3,392.9L964.9,392.2L963.6,389.4L960.5,390.3L957.2,397.3L955.2,398.3L952.8,397.0L952.9,396.1L952.2,396.6L949.5,395.1L945.9,397.6L942.2,397.1L940.7,399.3L937.6,400.9L933.2,396.3L931.1,399.8L927.1,400.6L925.1,405.0L923.4,406.2L914.8,405.6L912.6,406.3L910.4,408.2L907.4,413.1L906.2,413.2L901.1,417.5L899.4,417.6L897.3,420.3L895.7,418.5L892.8,419.2L891.3,422.4L890.6,422.2L889.6,418.7L887.0,418.9L884.7,420.8L880.8,429.8L878.4,430.7L878.5,432.1L877.5,432.9L876.4,432.4L873.2,433.5L872.0,432.4L868.8,432.4L865.3,429.8L859.9,435.0L855.9,436.7L852.8,436.2L851.3,434.3L847.1,433.8L846.7,434.6L847.9,435.6L847.9,436.9L847.0,440.0L845.2,441.0L842.9,444.4L842.5,442.3L843.9,439.1L843.2,436.1L841.1,433.5L836.8,433.7L835.3,430.9L832.5,430.9L829.9,433.5L829.3,436.6L828.0,438.4L828.6,439.8L827.3,441.6L827.7,449.0L824.4,450.0L823.0,449.5L822.2,450.8L821.3,450.8L817.7,459.3L815.9,461.3L815.9,462.9L814.6,463.0L813.7,465.1L810.8,467.0L809.3,470.2L805.4,471.3L801.6,473.8L797.2,470.3L793.3,470.0L789.3,471.6L784.6,470.5L780.6,468.5L773.5,462.9L772.2,463.6L770.3,461.7L770.0,464.5L767.3,462.7L763.9,463.0L763.6,462.0L764.8,460.3L763.4,455.6L764.1,453.9L764.0,449.9L761.8,447.6L760.0,438.4L752.4,437.1L750.9,436.0L747.6,436.4L740.4,434.5L737.6,431.2L735.1,430.3L732.2,425.7L732.9,422.5L727.4,409.7L726.2,408.2L720.4,406.1L722.9,400.5L721.1,403.3L716.9,401.7L717.1,402.3L712.6,399.9L714.9,400.7L712.7,399.5L715.1,400.2L717.1,395.0L716.2,397.6L717.5,397.0L719.3,392.7Z","cx":852.3,"cy":384.7,"w":309.2,"h":151.0,"bx":712.6,"by":322.8,"x2":1021.8,"y2":473.8},"彰化縣":{"d":"M764.9,496.7L767.7,499.3L767.4,500.8L766.5,500.7L766.9,502.9L765.2,503.7L766.7,504.8L765.8,506.2L766.9,506.9L766.3,508.7L766.8,509.6L766.2,510.9L764.6,510.9L765.3,512.6L763.8,515.2L764.0,516.7L763.5,518.0L762.3,518.2L762.5,519.8L763.4,520.4L763.0,521.0L764.7,521.9L763.4,524.8L762.1,524.6L763.3,525.6L760.9,527.7L761.4,528.6L762.6,527.3L763.0,528.3L764.2,527.2L765.1,528.3L763.9,529.0L765.4,528.7L765.2,529.7L766.6,529.9L763.6,530.7L763.4,531.4L767.6,530.3L768.0,530.8L766.8,530.9L767.7,531.1L767.3,532.0L768.6,532.9L766.6,532.7L768.3,533.1L767.8,534.0L771.0,535.8L771.9,537.2L779.9,534.9L780.6,535.9L780.7,539.5L781.8,539.4L782.2,540.3L782.2,541.0L779.5,541.6L776.0,544.1L769.3,546.3L764.9,544.9L752.0,544.2L740.9,541.1L733.5,541.8L727.6,541.3L709.9,535.6L704.0,531.2L696.8,532.5L684.3,531.7L680.5,533.7L664.9,534.6L648.7,530.0L644.3,527.0L645.4,526.8L649.8,520.9L650.5,518.3L651.4,519.7L652.1,518.1L653.0,518.2L652.5,517.8L653.3,518.8L654.2,518.0L654.9,518.8L658.4,516.0L666.0,500.3L666.3,497.7L668.3,495.2L664.1,494.4L663.8,493.6L669.8,484.7L669.6,483.4L671.9,477.0L677.7,476.6L677.2,475.3L679.1,470.0L678.6,469.6L679.1,469.9L683.5,462.8L682.3,461.3L683.5,462.7L684.3,462.4L684.7,459.8L687.4,458.3L686.1,457.3L687.9,458.1L695.7,454.4L695.3,453.7L693.4,453.4L686.7,453.6L686.6,447.3L688.3,445.9L692.2,444.9L692.5,444.1L699.7,444.0L702.1,444.8L704.6,442.7L703.2,442.1L704.6,441.4L703.3,440.9L705.0,431.9L699.1,432.0L697.3,438.1L694.2,438.2L691.8,437.1L689.4,440.1L690.0,440.2L687.9,440.3L687.4,441.7L687.3,440.9L694.9,430.4L698.0,428.4L697.0,427.5L698.0,428.1L699.8,426.7L705.8,419.3L712.2,419.2L713.5,418.4L714.7,416.9L713.0,416.0L715.2,412.7L715.8,412.8L714.6,412.2L715.2,411.1L714.7,412.2L715.8,412.8L717.0,411.2L716.5,410.8L717.7,410.6L720.4,406.1L726.2,408.2L727.4,409.7L732.9,422.5L732.2,425.8L735.1,430.3L737.6,431.2L739.0,433.6L747.6,436.4L750.9,436.0L752.4,437.1L760.0,438.4L761.8,447.6L764.0,449.9L764.1,453.9L763.4,455.6L764.8,460.3L763.6,462.0L763.9,463.0L767.3,462.7L770.0,464.5L770.5,464.2L769.9,462.2L770.6,461.7L772.2,463.6L773.5,462.9L780.6,468.5L779.8,469.7L777.9,469.9L779.0,470.6L778.7,471.3L770.4,470.2L769.3,470.3L768.6,471.4L767.9,470.8L767.5,475.0L771.7,478.8L770.5,482.4L770.7,485.8L767.5,489.4L764.4,488.2L766.5,489.1L764.6,489.7L766.8,492.5L765.6,492.1L765.5,492.8L767.8,495.3L766.9,494.8L764.9,496.7Z","cx":733.3,"cy":488.7,"w":137.9,"h":140.3,"bx":644.3,"by":406.1,"x2":782.3,"y2":546.4},"南投縣":{"d":"M955.2,398.3L957.2,397.3L960.5,390.3L963.6,389.4L964.9,392.2L967.3,392.9L968.3,394.9L972.4,395.1L974.9,392.5L975.8,393.5L979.1,393.1L985.6,395.2L987.9,397.0L990.0,401.5L990.0,404.9L982.5,406.6L979.6,410.2L976.9,411.8L970.3,412.8L971.0,419.6L968.5,419.6L969.8,421.5L968.8,427.1L973.2,428.2L979.5,433.6L983.5,434.3L982.7,438.4L980.5,441.0L981.9,444.3L977.2,448.4L974.5,452.3L973.2,451.6L969.3,454.9L970.1,459.8L962.1,476.6L963.5,481.7L966.3,481.8L967.7,485.0L966.7,489.9L965.8,490.9L966.6,491.8L965.9,494.4L967.3,499.4L967.1,504.1L966.7,504.9L964.1,504.9L962.5,506.5L962.9,507.7L964.2,507.9L963.8,510.4L964.8,512.9L963.1,514.0L963.8,516.6L961.5,516.8L960.0,518.3L958.7,523.7L955.7,527.7L954.8,532.9L955.6,534.0L954.3,535.3L954.2,537.4L952.0,538.6L951.5,540.7L951.7,544.1L952.9,545.5L944.8,550.9L946.1,553.1L945.4,554.2L950.1,557.6L952.6,557.8L953.8,558.8L952.4,560.3L952.3,563.6L952.6,565.3L953.7,565.3L954.6,567.2L955.7,567.3L955.2,568.7L956.3,572.8L955.7,580.0L953.5,583.2L954.6,585.6L954.5,588.6L950.9,596.4L951.2,600.4L948.8,604.6L947.6,609.5L945.3,611.1L941.6,609.4L940.0,611.4L937.0,613.1L936.6,615.5L933.0,614.0L928.8,614.2L928.4,618.8L931.0,619.9L931.0,621.0L930.0,623.4L928.3,623.1L926.6,625.1L928.1,628.5L926.8,632.1L928.1,634.6L926.1,634.9L923.1,638.6L917.7,636.3L913.3,637.2L911.4,636.3L909.6,638.7L908.4,638.9L902.3,637.4L901.6,641.6L900.4,643.8L897.8,645.2L897.6,647.9L893.2,652.5L896.4,654.6L896.9,655.8L899.4,656.8L897.1,660.4L891.8,662.1L889.2,664.5L885.7,665.8L884.2,663.8L884.2,662.3L885.9,660.1L883.5,656.5L880.7,656.6L875.0,654.2L871.8,654.2L870.5,653.3L864.6,654.9L861.4,652.8L859.5,653.7L855.2,652.0L850.9,651.8L845.5,652.0L843.6,654.7L838.3,652.7L831.7,652.8L830.7,653.5L828.7,652.3L827.0,649.4L825.6,644.2L826.0,641.9L824.6,638.5L824.8,636.4L821.2,631.4L821.3,628.0L822.1,626.3L823.5,625.5L822.9,624.5L824.9,622.4L825.3,619.5L824.7,617.3L826.5,614.2L824.7,612.9L823.8,611.1L824.0,609.8L822.8,609.3L819.6,610.8L816.9,610.6L815.7,609.3L811.6,608.9L807.2,605.4L804.0,604.6L802.3,605.7L796.9,605.9L796.8,603.3L794.7,602.1L793.1,599.4L791.4,600.1L791.6,602.5L788.9,603.8L784.5,602.7L782.9,603.5L782.1,606.0L775.1,606.1L772.2,604.1L772.6,599.6L770.6,599.0L766.4,602.9L765.6,601.8L765.1,597.7L767.0,595.0L767.0,591.9L770.7,584.8L771.1,581.4L769.6,575.6L770.3,574.4L768.2,571.9L769.0,567.9L768.4,565.6L769.9,563.0L773.5,563.5L773.5,556.9L768.7,546.2L776.0,544.1L779.5,541.6L782.3,541.0L782.1,539.6L780.7,539.5L780.6,535.9L779.9,534.9L771.9,537.2L771.0,535.8L767.8,534.0L768.3,533.1L766.6,532.7L768.6,532.9L767.3,532.0L767.7,531.1L766.8,530.9L768.0,530.8L767.6,530.3L763.4,531.4L763.6,530.7L766.6,529.9L765.2,529.7L765.4,528.7L763.9,529.0L765.1,528.3L764.2,527.2L763.0,528.3L762.6,527.3L761.4,528.6L760.9,527.7L763.3,525.6L762.1,524.6L763.4,524.8L764.7,521.9L763.0,521.0L763.4,520.4L762.5,519.8L762.3,518.2L763.5,518.0L763.8,515.2L765.2,512.6L764.6,510.9L766.3,510.9L767.0,507.9L765.8,506.2L766.7,504.8L765.2,503.7L766.9,502.9L766.5,500.7L767.4,500.8L767.7,499.2L764.7,496.7L766.9,494.8L767.8,495.3L765.5,492.8L765.6,492.1L766.8,492.5L764.6,489.7L766.5,489.1L764.4,488.2L767.5,489.4L770.7,485.8L770.5,482.4L771.7,478.8L767.5,475.0L767.9,470.8L768.6,471.4L769.3,470.3L770.4,470.2L778.7,471.3L779.0,470.6L777.9,469.9L779.8,469.7L780.6,468.5L785.6,470.9L789.3,471.6L793.3,470.0L797.2,470.3L801.6,473.8L805.4,471.3L809.3,470.2L810.8,467.0L813.7,465.1L814.6,463.0L815.9,462.9L815.9,461.3L817.7,459.3L821.3,450.8L822.2,450.8L823.0,449.5L824.4,450.0L827.7,449.0L827.3,441.6L828.6,439.8L828.0,438.4L829.3,436.6L829.9,433.5L832.5,430.9L835.3,430.9L836.8,433.7L841.1,433.5L843.2,436.1L843.9,439.1L842.5,442.3L842.9,444.4L845.2,441.0L847.0,440.0L847.9,436.9L847.9,435.6L846.7,434.6L847.1,433.8L851.3,434.3L852.8,436.2L855.9,436.7L859.9,435.0L865.3,429.8L868.8,432.4L872.0,432.4L873.2,433.5L876.4,432.4L877.5,432.9L878.5,432.1L878.4,430.7L880.8,429.8L884.7,420.8L887.0,418.9L889.6,418.7L890.6,422.2L891.3,422.4L892.8,419.2L895.7,418.5L897.3,420.3L899.4,417.6L901.1,417.5L906.2,413.2L907.4,413.1L910.4,408.2L912.6,406.3L914.8,405.6L923.4,406.2L925.1,405.0L927.1,400.6L931.1,399.8L933.2,396.3L937.6,400.9L940.7,399.3L942.2,397.1L945.9,397.6L949.5,395.1L952.2,396.6L952.9,396.1L952.8,397.0L955.2,398.3Z","cx":851.4,"cy":518.5,"w":229.1,"h":276.4,"bx":760.9,"by":389.4,"x2":990.0,"y2":665.8},"雲林縣":{"d":"M602.5,630.2L601.1,628.7L603.5,624.8L606.6,624.6L607.6,622.3L610.2,621.8L609.3,626.2L607.9,623.7L606.0,627.0L602.9,628.3L603.3,629.4L602.5,630.2ZM609.9,633.4L607.9,633.0L609.0,630.7L608.2,630.2L608.9,629.1L608.1,628.6L609.1,628.7L609.5,627.3L611.5,629.0L609.9,632.1L608.5,632.5L609.9,633.4ZM599.1,636.4L597.1,633.9L599.5,629.4L602.4,632.1L600.9,632.9L603.6,633.6L602.8,633.7L603.0,634.4L599.9,633.7L599.1,636.4ZM587.4,647.2L589.1,648.1L588.6,649.6L587.5,650.0L588.2,650.3L585.5,650.9L586.9,649.6L585.2,647.8L585.4,649.4L583.7,650.4L584.0,651.6L583.5,651.0L582.1,651.6L583.0,647.7L584.8,646.2L583.5,645.3L581.5,651.0L580.5,651.1L579.6,649.5L579.9,651.3L578.0,650.6L576.5,652.1L576.8,652.9L575.8,653.8L576.8,654.4L576.0,655.4L576.6,655.7L576.2,657.5L573.1,657.3L573.8,654.7L574.8,654.4L574.3,654.1L571.5,656.0L571.1,657.0L575.0,662.7L574.5,663.3L575.7,664.6L575.1,665.6L574.1,663.7L573.7,664.2L573.1,663.5L573.5,662.8L572.7,662.5L570.0,657.0L567.8,655.5L569.0,652.7L593.3,635.9L594.0,634.7L594.2,635.6L597.9,637.6L598.6,640.1L594.5,639.4L594.5,640.8L592.6,641.2L592.1,642.5L593.0,643.0L591.3,643.0L590.8,642.3L590.9,643.0L589.6,643.5L591.9,644.1L589.4,644.2L589.1,644.9L590.5,644.8L591.2,645.8L590.0,647.1L589.1,645.5L588.2,646.5L585.5,646.4L587.4,647.2ZM621.7,563.7L622.2,564.5L620.6,565.6L620.4,565.1L617.9,569.6L619.4,565.5L621.7,563.7ZM769.9,586.4L767.5,590.2L767.0,595.0L765.1,597.6L765.7,602.1L766.8,603.0L770.2,599.0L772.6,599.5L772.2,604.1L775.2,606.1L777.6,606.5L782.1,606.0L782.9,603.5L784.5,602.7L787.9,603.7L790.5,603.1L791.7,602.4L791.4,600.1L793.1,599.4L794.4,601.8L796.9,603.4L796.9,605.9L795.0,608.3L797.5,610.6L796.6,611.8L797.9,615.0L797.3,617.4L798.6,619.7L794.9,619.2L792.8,620.2L790.5,619.5L790.1,617.9L785.3,617.7L779.8,619.7L777.9,616.9L773.9,619.0L771.7,619.0L770.9,617.6L769.6,617.8L771.4,615.2L770.8,614.1L771.2,611.9L763.4,613.0L761.9,615.0L756.1,615.4L752.9,614.5L749.9,615.7L746.9,613.7L743.0,613.3L742.4,612.0L736.5,611.5L735.2,610.7L728.0,603.0L726.8,600.7L727.2,599.0L726.0,597.6L722.7,598.3L721.3,597.4L720.9,599.2L718.3,598.4L717.6,599.6L714.3,599.3L710.5,600.7L709.5,600.4L710.2,599.2L707.5,599.2L706.4,600.8L704.6,600.9L705.1,602.2L704.1,601.8L703.2,603.3L701.5,603.5L700.4,603.0L700.1,601.0L698.5,602.3L695.7,601.0L695.0,598.0L693.9,598.7L694.4,600.4L689.3,602.6L687.4,606.2L683.1,607.0L682.9,608.8L680.8,611.3L675.8,612.4L673.2,612.1L672.7,616.7L670.9,618.4L668.5,619.0L664.7,618.3L664.4,619.1L665.7,621.7L664.4,622.3L661.0,621.7L659.3,622.4L659.5,626.4L655.0,628.9L653.6,633.2L651.0,632.3L648.7,628.0L644.8,628.8L644.2,630.2L645.9,638.5L643.4,641.1L638.4,642.2L630.9,639.2L625.2,640.3L620.7,637.8L618.1,638.3L614.3,636.6L614.1,634.7L615.6,632.8L612.8,628.2L612.1,623.1L612.6,622.6L611.7,622.6L612.8,622.4L613.4,620.5L613.5,619.1L612.6,618.6L612.7,615.3L612.9,612.4L613.9,610.6L612.8,610.1L612.9,605.5L610.3,604.3L611.2,604.2L611.0,603.5L612.0,604.2L611.2,603.3L612.9,603.2L612.9,602.5L612.5,603.2L610.4,603.0L612.4,602.4L613.7,592.8L615.1,590.4L615.8,590.6L615.2,589.7L616.2,589.7L616.2,587.7L616.7,587.9L619.7,581.2L624.5,574.9L627.0,575.3L625.5,574.3L622.4,574.4L623.0,574.0L622.3,574.2L621.7,573.1L622.3,568.4L621.5,568.2L622.2,568.1L620.8,567.9L619.8,569.6L620.8,567.3L619.7,567.2L618.6,569.1L619.2,569.6L618.5,569.1L619.6,567.0L622.3,567.9L623.9,558.3L625.0,556.5L630.6,556.2L630.8,550.8L632.7,548.6L632.1,548.3L628.0,554.5L625.5,555.5L622.1,555.6L622.2,556.8L619.6,550.8L619.3,548.3L619.6,547.6L620.7,552.8L620.6,551.3L621.7,551.0L622.5,551.9L622.3,550.2L626.6,541.3L625.7,541.1L624.4,542.8L624.8,541.8L623.1,541.4L620.9,543.8L622.7,541.3L620.3,543.5L618.9,546.2L617.7,546.7L623.5,540.4L621.9,539.2L625.0,539.1L633.1,533.9L629.3,536.0L629.7,534.5L632.5,533.9L631.0,533.5L641.1,535.7L635.1,534.0L638.4,529.3L637.0,527.5L638.2,526.4L639.2,526.9L639.9,525.5L641.6,526.4L641.6,528.6L643.3,528.4L644.3,527.0L648.7,530.0L664.9,534.6L680.5,533.7L684.3,531.7L696.8,532.5L704.0,531.2L709.9,535.6L727.6,541.3L733.5,541.8L740.9,541.1L752.0,544.2L764.9,544.9L768.7,546.2L771.2,550.6L773.5,557.2L773.4,563.7L769.9,563.0L768.4,565.6L769.0,567.9L768.2,571.9L770.3,574.4L769.6,575.6L771.1,581.4L769.9,586.4Z","cx":694.0,"cy":582.6,"w":230.8,"h":140.1,"bx":567.7,"by":525.5,"x2":798.6,"y2":665.6},"嘉義縣":{"d":"M772.3,714.8L770.8,712.7L769.6,713.3L769.5,720.0L768.0,722.3L769.2,726.6L771.2,729.2L772.1,733.7L771.5,736.1L772.6,737.6L764.9,735.9L759.1,738.2L755.2,736.0L754.8,733.5L753.7,732.3L751.9,737.7L749.7,739.4L749.3,740.9L745.2,738.8L744.0,740.0L742.0,740.0L737.8,736.4L734.9,735.8L734.1,734.8L733.1,735.3L730.8,732.5L733.5,730.5L734.9,727.1L731.2,721.5L731.8,720.6L731.7,715.9L733.0,713.4L731.9,707.8L734.5,706.0L734.9,704.6L737.3,702.3L735.4,699.4L732.6,698.8L729.7,696.9L726.4,696.6L726.3,693.2L727.3,693.9L728.7,692.6L728.1,689.9L726.3,688.4L724.7,688.7L721.2,686.9L719.8,688.1L720.0,684.7L724.5,682.1L723.2,679.7L721.7,679.3L721.4,680.3L720.3,680.1L718.4,682.0L717.2,680.9L716.5,678.4L706.1,673.1L703.7,674.1L703.0,675.6L700.5,675.4L699.9,676.6L698.7,674.2L696.8,674.3L696.1,673.2L694.6,674.4L687.7,676.6L677.6,677.4L675.8,678.4L673.0,682.5L669.7,683.4L667.0,681.7L665.8,682.6L665.8,686.1L660.2,686.2L658.0,689.0L657.3,691.3L658.1,694.7L655.4,695.6L654.2,693.9L652.2,693.6L650.1,696.7L652.2,696.6L652.1,698.0L649.1,701.0L645.5,702.7L643.0,702.7L637.7,713.2L635.0,714.7L633.0,714.7L627.5,711.4L626.7,713.0L627.8,715.1L624.9,714.9L623.6,713.8L621.3,709.5L615.5,707.3L614.8,704.8L605.4,697.9L606.7,697.9L606.3,697.0L605.4,697.4L607.1,693.2L611.9,686.7L613.7,687.1L617.6,686.1L617.8,684.7L616.9,685.9L614.7,685.8L615.1,683.7L613.8,683.7L613.5,685.3L613.5,683.1L612.2,683.0L614.7,683.0L616.3,681.9L618.1,684.7L617.8,683.4L619.8,680.1L620.6,680.1L619.2,679.6L618.7,675.7L616.8,676.3L616.7,678.1L616.1,678.3L615.4,675.7L615.0,672.7L615.9,671.5L615.4,669.9L617.4,668.5L616.7,668.1L615.2,669.1L615.7,668.3L614.1,668.0L614.6,664.7L617.3,661.3L615.8,661.1L616.2,659.1L612.0,661.1L612.0,659.8L611.0,660.3L611.9,661.1L611.0,661.5L610.3,660.2L612.1,658.0L613.9,657.4L614.6,655.6L614.2,655.9L613.8,654.6L613.9,652.8L615.2,652.3L615.3,651.1L617.4,649.1L617.2,646.7L621.6,647.1L621.8,646.5L618.0,645.4L610.4,647.7L607.6,647.5L606.0,645.2L606.0,637.8L607.7,636.7L613.2,637.8L614.3,637.4L614.3,636.6L618.1,638.3L620.7,637.8L625.2,640.3L630.9,639.2L638.4,642.2L642.7,641.3L645.9,638.5L644.2,630.2L644.8,628.8L648.7,628.0L651.0,632.3L653.6,633.2L655.0,628.9L659.5,626.4L659.3,622.4L661.0,621.7L664.4,622.3L665.7,621.7L664.4,619.1L664.7,618.3L668.5,619.0L670.9,618.4L672.7,616.7L673.2,612.1L675.8,612.4L680.8,611.3L682.9,608.8L683.1,607.0L687.4,606.2L689.3,602.6L694.4,600.4L694.1,598.4L695.4,598.1L695.7,601.1L698.5,602.3L700.1,601.0L700.4,603.0L701.5,603.5L703.2,603.3L704.1,601.8L705.1,602.2L704.6,600.9L706.4,600.8L707.5,599.2L710.2,599.2L709.5,600.4L710.5,600.7L714.3,599.3L717.6,599.6L718.3,598.4L720.9,599.2L721.3,597.4L722.7,598.3L726.0,597.6L727.2,599.0L726.8,600.7L728.0,603.0L736.3,611.4L742.4,612.0L743.0,613.3L746.9,613.7L750.2,615.7L752.9,614.5L756.1,615.4L761.9,615.0L763.4,613.0L771.2,611.9L770.8,614.1L771.4,615.2L769.6,617.8L770.9,617.6L771.9,619.0L773.9,619.0L777.9,616.9L779.8,619.7L785.3,617.7L790.1,617.9L790.5,619.5L792.8,620.2L794.9,619.2L798.6,619.7L797.3,617.4L797.9,615.0L796.6,611.8L797.5,610.6L795.0,608.3L796.6,606.0L802.3,605.7L803.7,604.6L807.2,605.4L811.6,608.9L815.7,609.3L816.9,610.6L823.8,609.7L824.7,612.9L826.5,614.2L824.7,617.3L825.3,619.5L824.9,622.4L822.9,624.5L823.5,625.5L822.1,626.3L821.3,628.0L821.2,631.4L824.8,636.4L824.6,638.5L826.0,641.9L825.6,644.2L827.0,649.4L828.7,652.3L830.7,653.5L831.7,652.8L838.3,652.7L843.6,654.7L845.5,652.0L850.5,651.8L855.2,652.0L859.5,653.7L861.4,652.8L864.6,654.9L867.7,654.1L864.8,655.9L861.1,656.1L860.5,657.9L858.6,658.9L856.4,657.6L852.8,658.1L851.5,659.6L849.9,659.3L848.2,662.1L847.2,661.9L845.6,665.9L844.6,665.4L843.9,666.6L842.0,666.6L838.6,669.6L836.8,669.2L836.3,670.3L835.3,669.9L834.1,670.8L833.9,673.6L830.5,678.4L831.3,679.5L830.0,680.0L829.3,682.3L828.1,682.4L827.6,686.0L826.4,687.4L821.1,688.5L819.7,687.8L820.0,688.9L818.7,691.2L817.3,692.5L816.0,692.3L816.0,693.6L814.9,693.8L814.8,695.8L813.3,697.4L808.7,696.9L807.4,697.6L805.4,696.8L805.6,699.4L803.7,701.2L803.8,702.6L797.3,707.2L796.8,709.9L791.1,708.9L789.4,710.3L788.2,712.6L788.4,715.5L787.2,717.1L780.2,716.0L779.5,715.0L778.3,715.3L777.0,713.8L774.3,713.2L772.3,714.8ZM691.8,656.5L697.1,655.7L698.3,657.2L702.8,657.0L703.0,660.0L705.5,661.9L704.8,662.9L706.0,664.3L710.0,662.6L710.7,660.6L713.8,658.8L715.1,656.8L717.6,656.6L721.6,660.0L723.3,659.7L725.0,657.0L724.7,655.5L727.5,653.5L727.8,652.4L725.4,650.2L726.0,648.8L725.2,647.1L721.5,646.6L720.0,645.4L719.6,641.9L716.6,641.3L715.4,643.7L714.0,644.1L711.4,640.2L711.4,638.3L706.3,637.5L706.4,639.6L704.1,637.9L704.0,640.7L698.8,641.9L697.3,644.0L696.2,644.2L696.4,641.4L693.9,643.0L693.7,644.1L691.9,643.4L690.3,644.1L690.4,646.6L692.0,646.9L691.6,649.6L693.3,650.9L693.4,653.6L691.8,655.1L691.8,656.5Z","cx":726.8,"cy":668.9,"w":262.3,"h":143.5,"bx":605.4,"by":597.4,"x2":867.7,"y2":740.9},"嘉義市":{"d":"M702.5,640.6L704.1,640.5L704.1,637.9L706.3,639.7L706.3,637.5L708.2,637.4L711.4,638.4L711.2,639.7L713.7,644.0L715.4,643.7L716.6,641.3L719.6,641.9L719.8,645.2L721.5,646.6L725.2,647.1L726.0,648.8L725.4,650.2L726.1,650.2L727.7,653.2L724.7,655.5L725.0,657.0L723.3,659.7L721.6,660.0L717.6,656.6L715.1,656.8L713.8,658.8L710.7,660.6L710.0,662.6L705.9,664.3L704.8,662.9L705.5,662.0L703.0,660.0L702.8,657.0L698.3,657.2L697.1,655.7L691.8,656.5L691.8,655.1L693.4,653.6L693.3,650.9L691.6,649.6L692.0,646.9L690.4,646.6L690.3,644.1L691.9,643.4L693.7,644.1L693.9,643.0L696.4,641.4L696.2,644.2L697.1,644.1L698.8,641.9L702.5,640.6Z","cx":710.0,"cy":649.4,"w":37.5,"h":26.8,"bx":690.2,"by":637.4,"x2":727.8,"y2":664.3},"臺南市":{"d":"M749.3,740.9L749.7,739.4L751.9,737.7L753.7,732.3L754.8,733.5L755.2,736.0L759.1,738.2L764.9,735.9L766.7,735.9L773.0,737.6L773.6,739.8L772.1,743.0L771.1,743.0L769.6,744.7L767.6,748.9L768.9,751.7L767.7,752.6L767.3,754.4L765.2,754.6L765.6,756.1L762.7,758.5L761.2,758.5L759.5,760.9L759.7,762.4L756.4,764.9L752.4,772.0L752.3,775.1L745.7,786.1L741.8,790.6L733.2,795.9L731.9,798.4L726.0,804.3L719.8,808.2L718.6,813.1L712.4,812.9L712.8,814.7L712.1,815.5L712.7,817.2L710.7,817.2L710.1,821.6L707.6,821.0L706.9,821.8L698.8,842.6L696.3,843.9L695.3,842.0L694.0,841.8L693.2,840.5L691.2,840.5L689.5,841.9L687.9,840.9L686.3,843.2L684.6,843.9L685.0,845.9L683.0,846.4L683.0,847.4L680.9,847.6L681.6,847.9L681.5,848.9L680.2,850.5L679.0,850.7L679.6,851.4L678.6,852.4L677.7,851.3L672.4,851.7L670.2,848.0L668.5,849.8L666.8,848.2L657.5,846.5L655.5,846.6L656.0,849.4L654.0,849.7L649.6,847.5L648.9,848.3L649.5,849.7L648.0,850.1L644.5,846.9L641.4,846.2L641.1,842.9L640.4,842.4L636.7,844.8L628.7,840.9L623.4,844.1L623.6,837.3L622.5,832.0L619.7,825.9L617.2,826.0L618.1,824.3L617.3,823.4L616.5,824.1L617.3,823.4L618.2,824.2L618.5,823.0L617.6,823.0L617.9,821.9L615.5,818.7L602.8,807.2L592.8,801.0L586.0,798.2L583.9,793.8L578.6,789.3L579.6,779.6L588.0,765.2L590.2,752.9L589.1,751.8L590.0,752.4L590.5,751.6L589.2,751.2L591.1,750.1L593.9,744.1L593.8,743.2L591.8,742.0L594.0,743.1L594.4,742.5L594.3,741.0L592.0,741.5L593.5,740.9L594.6,738.6L594.0,733.9L596.0,732.9L595.4,732.2L597.9,723.7L598.4,715.2L599.5,713.5L602.5,712.7L601.5,712.4L601.4,711.5L604.8,704.1L605.2,698.4L614.8,704.8L615.5,707.3L621.3,709.5L624.5,714.6L627.7,715.2L626.7,713.0L627.5,711.4L632.5,714.6L635.0,714.7L638.3,712.3L643.0,702.7L645.5,702.7L648.8,701.2L652.1,698.0L652.2,696.6L650.1,696.7L651.8,693.9L654.0,693.8L655.4,695.6L658.1,694.7L657.3,690.7L660.1,686.2L665.8,686.1L666.3,682.2L668.0,681.7L669.2,683.4L672.8,682.6L675.8,678.4L677.6,677.4L687.7,676.6L694.6,674.4L696.1,673.2L696.8,674.3L698.7,674.2L699.9,676.6L700.5,675.4L703.0,675.6L703.7,674.1L706.1,673.1L716.5,678.4L717.2,680.9L718.4,682.0L720.3,680.1L721.4,680.3L721.7,679.3L723.2,679.7L724.5,682.1L720.0,684.7L719.8,688.1L721.2,686.9L724.7,688.7L726.3,688.4L728.1,689.9L728.7,692.6L727.3,693.9L726.3,693.2L726.4,696.6L729.7,696.9L732.6,698.8L735.4,699.4L737.3,702.3L734.9,704.6L734.5,706.0L731.9,707.8L733.0,713.4L731.7,715.9L731.8,720.6L731.2,721.5L734.9,727.1L733.5,730.5L730.8,732.6L733.1,735.3L734.1,734.8L734.9,735.8L737.8,736.4L742.0,740.0L744.0,740.0L745.2,738.8L749.3,740.9Z","cx":683.8,"cy":757.0,"w":195.0,"h":179.3,"bx":578.6,"by":673.1,"x2":773.6,"y2":852.4},"高雄市":{"d":"M710.6,891.8L711.0,909.9L708.8,919.4L706.0,923.6L704.9,929.4L704.8,939.7L704.1,942.4L705.1,947.3L708.0,950.9L708.3,954.9L707.5,960.6L705.0,968.2L703.2,969.4L700.7,978.1L701.6,985.0L701.1,992.2L697.7,992.7L694.0,991.4L693.5,992.2L693.8,991.2L693.1,991.7L692.9,990.9L692.6,992.1L692.6,990.6L687.4,986.7L688.1,985.1L687.4,986.6L686.8,986.3L683.9,983.5L680.7,982.1L676.4,977.6L674.7,978.3L673.2,976.9L674.3,975.8L673.3,974.3L671.6,975.5L670.3,974.4L672.8,973.2L672.4,972.7L670.2,974.3L672.3,972.4L671.2,972.5L666.9,968.3L664.5,969.0L661.9,968.3L665.4,968.8L666.9,968.2L665.1,968.1L667.0,968.2L667.7,967.0L665.0,964.6L662.6,967.0L664.6,964.9L663.4,962.4L652.5,947.7L648.4,943.9L651.0,941.4L647.2,934.9L646.9,931.0L647.7,928.2L650.9,925.4L651.2,923.8L651.0,920.0L648.2,919.2L647.9,918.2L648.2,919.1L651.3,919.6L652.2,922.8L653.0,923.1L654.4,921.8L653.4,920.4L654.2,919.5L653.4,916.0L654.4,916.0L654.5,913.9L651.3,913.4L652.0,913.9L650.9,917.3L648.8,917.7L650.6,916.9L648.9,912.0L649.7,911.4L648.6,911.4L648.7,910.4L647.8,908.2L646.7,908.0L647.7,908.0L647.0,907.1L646.6,907.5L646.9,906.8L644.0,899.9L641.9,895.8L640.9,895.6L642.1,895.7L641.7,894.8L640.8,895.2L641.3,894.0L635.5,880.4L635.0,879.6L630.5,880.4L629.1,879.7L628.1,877.6L628.2,877.0L629.1,879.6L632.3,880.0L630.7,880.0L630.3,879.0L630.8,880.0L632.3,879.8L632.0,877.9L633.6,877.5L633.9,875.7L633.0,875.3L633.4,874.4L630.6,867.4L631.2,867.1L628.0,868.0L630.6,867.0L629.4,866.0L630.7,866.5L630.0,865.0L629.0,865.7L629.7,863.8L629.3,862.8L628.4,863.3L629.3,862.1L627.9,861.5L629.6,861.0L628.1,860.4L628.9,860.1L628.5,858.4L623.4,844.1L628.7,840.9L636.7,844.8L640.4,842.4L641.1,842.9L641.4,846.2L644.5,846.9L648.0,850.1L649.5,849.7L648.9,848.3L649.6,847.5L654.0,849.7L656.0,849.4L655.5,846.6L657.5,846.5L666.8,848.2L668.5,849.8L670.2,848.0L672.4,851.7L677.7,851.3L678.6,852.4L679.6,851.4L679.0,850.7L680.2,850.5L681.5,848.9L681.6,847.9L680.9,847.6L683.0,847.4L683.0,846.4L685.0,845.9L684.6,843.9L686.3,843.2L687.9,840.9L689.5,841.9L691.2,840.5L693.2,840.5L694.0,841.8L695.3,842.0L696.3,843.9L698.6,842.7L701.7,834.8L702.5,834.3L706.9,821.8L707.6,821.0L710.1,821.6L710.7,817.2L712.7,817.2L712.1,815.5L712.8,814.7L712.4,812.9L718.6,813.1L719.8,808.2L726.0,804.3L734.2,795.1L741.9,790.6L748.1,783.1L748.0,781.7L752.3,775.1L752.4,772.0L756.4,764.9L759.7,762.4L759.5,760.9L761.2,758.5L762.7,758.5L765.6,756.1L765.2,754.6L767.3,754.4L767.7,752.6L768.9,751.7L767.6,748.9L769.6,744.7L771.1,743.0L772.1,743.0L773.6,739.8L773.3,737.9L771.5,736.2L772.1,733.7L771.2,729.2L769.2,726.6L768.0,722.3L769.5,720.0L769.7,713.2L770.8,712.7L772.3,714.8L774.3,713.2L777.0,713.8L778.3,715.3L779.5,715.0L780.2,716.0L787.2,717.1L788.4,715.5L788.2,712.6L789.4,710.3L791.1,708.9L796.8,709.9L797.3,707.2L803.8,702.6L803.7,701.2L805.6,699.4L805.4,696.8L807.4,697.6L808.7,696.9L813.3,697.4L814.8,695.8L814.9,693.8L816.0,693.6L816.0,692.3L817.3,692.5L818.7,691.2L820.0,688.9L819.7,687.8L821.1,688.5L826.4,687.4L827.6,686.0L828.1,682.4L829.3,682.3L830.0,680.0L831.3,679.5L830.5,678.4L833.9,673.6L834.0,670.9L835.3,669.9L836.3,670.3L836.8,669.2L838.6,669.6L842.0,666.6L843.9,666.6L844.6,665.4L845.6,665.9L847.2,661.9L848.2,662.1L849.9,659.3L851.5,659.6L852.8,658.1L856.4,657.6L858.6,658.9L860.5,657.9L861.2,656.0L864.8,655.9L870.5,653.3L880.7,656.6L883.5,656.5L885.9,660.2L884.2,662.1L884.2,663.8L885.7,665.8L885.0,666.6L887.5,667.8L888.0,669.3L890.1,670.1L889.6,672.2L888.7,672.8L889.8,676.4L887.7,677.8L886.9,677.3L884.3,679.4L883.3,678.9L881.9,679.5L881.3,680.6L883.4,682.9L880.9,683.8L878.3,687.4L877.2,687.8L876.9,691.8L881.8,693.1L883.3,694.1L884.2,696.2L885.8,696.0L887.2,694.6L889.3,699.0L896.2,703.2L895.9,707.1L895.3,709.0L891.0,710.6L890.3,712.4L888.4,714.0L884.1,714.4L876.8,718.5L872.2,718.0L868.3,721.8L867.7,724.0L864.3,727.8L862.6,728.2L861.5,730.6L859.5,731.4L857.9,730.8L854.7,733.0L853.3,736.4L853.3,742.8L851.8,744.0L851.6,746.1L853.3,749.3L853.2,751.9L849.3,753.9L848.2,759.3L842.4,762.5L845.2,764.8L846.0,772.3L845.0,773.4L846.4,776.5L845.2,783.8L840.1,793.7L841.8,796.7L843.4,797.8L843.5,801.8L837.8,803.5L837.4,811.3L836.7,812.3L834.4,812.3L834.8,814.1L833.8,815.9L831.6,817.1L831.3,819.5L828.6,820.7L827.6,822.9L827.9,824.3L825.0,827.0L826.2,830.2L825.3,832.7L825.3,836.1L828.3,841.4L828.9,843.9L827.4,846.7L828.9,848.1L831.1,854.2L834.7,855.6L837.1,855.5L838.8,857.5L838.5,859.5L837.0,860.6L840.2,862.5L838.7,867.5L835.1,862.6L833.3,864.5L832.0,863.8L830.2,860.3L826.4,859.6L818.8,864.8L816.4,864.5L816.2,868.2L811.9,870.2L807.3,865.5L806.7,862.9L804.5,860.2L802.6,859.8L800.5,857.1L797.1,856.3L795.1,854.7L788.6,854.8L784.3,860.1L780.7,860.8L780.1,862.6L778.6,863.0L775.0,861.8L774.2,855.0L773.3,854.4L771.2,855.9L770.1,853.2L762.7,856.4L760.8,856.0L757.7,857.3L741.4,872.5L736.2,872.2L734.4,871.0L729.7,871.4L728.0,872.5L726.4,871.4L724.2,871.4L722.6,869.5L720.0,870.1L717.4,869.2L715.1,871.7L713.6,882.1L710.6,891.8Z","cx":745.6,"cy":829.3,"w":272.9,"h":339.4,"bx":623.4,"by":653.3,"x2":896.3,"y2":992.7},"屏東縣":{"d":"M680.7,1045.2L678.9,1043.7L682.2,1038.9L681.4,1036.7L686.7,1033.6L690.1,1035.4L689.5,1038.4L686.4,1040.0L682.6,1044.5L680.7,1045.2ZM784.9,1151.5L783.1,1147.4L783.0,1144.6L785.7,1140.6L786.6,1140.6L785.6,1138.7L786.5,1136.0L788.4,1136.3L789.5,1135.5L789.0,1135.5L789.6,1133.0L788.3,1127.5L787.0,1126.6L787.7,1125.4L792.3,1123.5L792.3,1119.0L791.4,1116.3L790.3,1115.3L790.4,1112.5L788.0,1110.1L788.3,1108.0L786.8,1107.0L787.5,1104.0L786.2,1102.1L785.2,1094.2L782.3,1087.5L782.8,1083.6L780.3,1079.8L778.6,1075.1L771.9,1068.7L772.9,1067.4L771.5,1067.6L772.4,1063.5L769.6,1055.7L769.3,1051.5L765.6,1046.1L758.5,1039.4L756.1,1034.1L753.0,1031.0L754.2,1032.0L754.2,1030.7L751.4,1027.9L740.0,1019.8L730.4,1014.7L729.0,1013.0L727.2,1013.1L710.0,1002.8L710.8,1002.0L709.7,1002.3L705.7,996.8L704.6,996.6L705.8,996.8L706.5,995.9L707.8,996.6L707.2,995.6L705.3,996.4L706.5,995.2L706.1,994.7L704.4,995.4L704.2,993.5L701.1,992.2L701.6,985.0L700.7,978.1L703.2,969.4L705.0,968.2L706.7,963.9L708.3,954.9L707.8,950.5L705.3,947.8L704.1,944.3L704.9,929.4L706.0,923.6L708.8,919.4L710.9,910.8L710.4,892.6L713.6,882.1L715.1,871.7L717.4,869.2L720.0,870.1L722.6,869.5L724.2,871.4L726.4,871.4L728.0,872.5L729.7,871.4L734.4,871.0L736.2,872.2L741.4,872.5L757.7,857.3L760.8,856.0L762.7,856.4L770.1,853.2L771.2,855.9L773.3,854.4L774.2,855.0L775.0,861.8L778.6,863.0L780.1,862.6L780.7,860.8L784.3,860.1L788.6,854.8L795.1,854.7L797.1,856.3L800.5,857.1L802.6,859.8L804.5,860.2L806.7,862.9L807.3,865.5L811.9,870.2L816.2,868.2L816.5,864.4L818.8,864.8L822.7,862.6L823.3,861.1L825.8,859.7L828.8,859.6L831.2,861.5L832.1,863.9L833.6,864.5L835.1,862.6L837.2,864.6L838.7,867.5L838.9,870.0L837.7,873.2L838.8,873.7L839.9,876.4L842.6,877.8L843.9,877.3L847.0,878.2L850.0,880.7L850.9,882.9L850.3,886.4L851.0,887.7L850.9,890.5L849.8,892.7L847.2,894.5L848.1,895.0L848.3,897.1L848.2,903.1L844.7,910.4L837.7,910.6L836.7,911.6L835.6,910.3L833.7,910.5L831.8,912.8L832.0,913.7L831.0,914.1L830.1,917.2L824.8,917.7L824.5,919.4L822.1,919.0L821.3,920.3L814.4,918.7L815.9,923.3L814.2,925.8L814.1,929.4L806.4,940.2L806.4,941.4L804.5,944.4L803.8,946.3L804.3,950.1L801.6,953.9L802.5,959.8L800.3,961.0L799.5,966.1L802.9,972.7L804.0,980.7L805.4,981.6L807.4,986.0L807.2,987.5L805.6,988.4L805.3,990.5L803.1,991.5L804.3,994.2L803.2,998.4L805.4,998.5L807.6,1000.4L811.1,1001.4L810.7,1003.7L812.9,1006.7L815.2,1012.4L812.2,1015.3L809.5,1016.2L807.7,1015.4L804.0,1016.8L805.3,1019.1L803.6,1021.0L804.9,1022.4L803.0,1023.9L802.5,1027.6L800.8,1029.6L803.8,1032.0L807.0,1032.4L807.1,1034.7L808.3,1036.3L810.8,1035.7L813.8,1037.0L816.2,1040.4L816.4,1044.5L817.5,1046.6L814.5,1049.4L811.7,1049.6L811.6,1053.3L812.7,1054.4L815.3,1054.8L816.4,1057.4L820.2,1058.0L820.6,1060.3L817.9,1060.6L817.3,1062.8L818.4,1064.4L818.2,1067.2L823.3,1065.1L826.6,1067.3L829.3,1071.2L836.8,1072.7L838.6,1075.0L837.9,1076.2L839.4,1076.5L843.6,1074.9L844.8,1072.8L848.6,1070.8L849.5,1075.0L847.8,1080.0L848.6,1085.4L846.8,1088.2L847.9,1096.0L847.0,1099.5L847.8,1102.1L847.0,1104.3L848.8,1105.9L845.1,1109.9L847.3,1117.7L850.4,1118.9L849.2,1120.8L849.4,1122.6L846.8,1125.2L847.7,1138.2L850.1,1143.2L846.0,1145.8L845.7,1149.0L842.4,1150.8L843.0,1152.6L842.2,1154.7L835.7,1158.4L832.5,1158.8L832.7,1163.1L831.2,1168.6L831.3,1172.0L833.7,1177.8L835.4,1179.2L837.7,1183.0L837.6,1186.3L839.1,1189.0L837.2,1190.0L834.7,1189.6L833.6,1188.5L833.1,1184.3L829.9,1183.2L825.4,1177.0L822.5,1177.4L820.7,1176.4L820.0,1174.8L818.6,1176.2L817.4,1174.0L813.1,1173.8L811.5,1171.7L809.4,1171.0L807.9,1168.7L804.7,1169.3L804.4,1170.1L804.7,1169.5L804.1,1169.6L803.7,1170.3L804.6,1170.4L802.5,1171.5L801.7,1174.0L801.3,1173.1L800.9,1173.7L801.2,1174.7L801.4,1173.5L802.0,1178.0L801.4,1177.4L801.6,1178.2L801.0,1177.9L799.8,1179.7L799.6,1182.2L796.2,1182.6L795.0,1181.9L793.2,1179.5L793.3,1177.6L792.2,1176.9L790.8,1177.2L790.5,1175.3L791.2,1166.9L792.3,1164.1L791.7,1161.3L791.0,1159.4L789.8,1159.0L789.4,1156.3L787.0,1155.4L784.9,1151.5Z","cx":804.7,"cy":1059.9,"w":172.1,"h":336.8,"bx":678.9,"by":853.2,"x2":851.0,"y2":1190.0},"宜蘭縣":{"d":"M1182.0,188.1L1181.0,188.8L1179.7,188.0L1176.0,188.2L1172.7,184.9L1175.5,186.0L1177.0,183.6L1179.3,183.8L1181.1,186.8L1182.0,187.1L1182.0,188.1ZM1144.9,253.7L1147.9,261.4L1150.3,264.9L1157.4,267.7L1156.9,268.5L1157.7,269.1L1156.3,269.4L1156.3,270.5L1156.1,269.3L1153.6,270.0L1153.2,269.5L1153.7,269.9L1155.5,268.5L1153.8,268.7L1151.7,267.1L1150.3,268.0L1149.6,267.4L1148.9,268.6L1149.6,269.4L1148.9,269.9L1150.0,270.0L1149.5,270.6L1150.3,271.2L1152.0,269.9L1152.0,272.1L1151.3,271.4L1151.7,272.4L1150.9,272.5L1151.0,273.6L1152.2,273.4L1151.1,274.0L1152.5,274.5L1151.1,275.0L1152.6,275.1L1152.1,276.6L1153.1,275.4L1152.8,272.2L1152.9,273.4L1154.1,273.6L1156.0,271.2L1154.4,273.3L1154.8,273.7L1153.2,274.1L1155.4,275.9L1154.3,276.0L1154.3,276.6L1153.1,276.3L1152.4,277.6L1153.7,291.2L1152.5,293.3L1150.1,293.3L1144.1,295.8L1143.2,297.2L1142.9,303.1L1146.5,304.5L1146.7,308.3L1149.1,308.5L1150.0,309.6L1147.2,309.6L1143.9,310.9L1141.0,313.8L1137.3,315.7L1137.3,318.6L1130.5,326.3L1127.8,334.4L1126.8,346.1L1121.7,358.7L1122.1,366.5L1118.1,366.3L1113.4,363.3L1103.7,362.0L1098.0,359.2L1095.9,359.7L1095.0,357.2L1091.6,358.2L1091.4,356.3L1089.8,356.4L1088.0,353.1L1085.0,353.3L1084.1,350.7L1083.2,351.4L1084.1,353.8L1083.5,354.2L1079.2,349.4L1079.1,348.4L1077.8,348.5L1077.9,347.1L1075.1,348.4L1074.6,349.6L1075.6,349.9L1074.9,351.4L1076.6,352.6L1076.7,354.2L1079.4,354.9L1079.3,355.9L1078.1,356.1L1078.5,359.3L1077.2,359.6L1076.6,358.9L1076.9,357.1L1075.4,357.7L1074.2,355.6L1073.3,358.1L1074.1,359.0L1073.7,359.7L1070.7,359.0L1069.6,361.2L1068.0,359.7L1066.9,360.3L1069.9,365.3L1070.1,367.9L1067.4,365.6L1065.0,366.4L1060.9,364.4L1057.8,364.6L1055.7,363.3L1054.5,360.5L1051.2,358.3L1047.4,358.5L1044.1,356.5L1041.3,357.2L1039.3,356.3L1036.9,357.7L1035.6,357.4L1032.6,354.6L1026.3,352.3L1021.8,348.8L1020.5,345.4L1018.9,346.0L1017.3,342.7L1014.8,342.6L1008.0,344.5L1005.8,343.8L1002.5,345.3L1001.7,347.2L999.6,348.2L997.4,347.8L996.0,346.3L995.3,344.1L996.2,342.8L994.6,340.6L991.3,339.2L987.9,339.3L986.6,340.5L984.4,337.6L982.5,336.8L982.1,334.5L983.2,325.9L981.2,323.2L979.8,322.8L980.6,320.8L982.8,316.6L985.9,314.1L985.7,312.5L987.2,311.5L988.0,309.1L992.6,307.6L994.6,304.6L996.9,303.5L997.5,299.6L1000.7,299.5L1001.2,297.2L1002.2,297.0L1002.9,295.1L1005.1,294.5L1006.3,293.1L1004.8,289.6L1005.4,286.6L1004.2,283.9L1006.3,281.8L1007.0,279.5L1009.7,277.9L1006.8,271.6L1009.8,267.7L1011.6,268.5L1014.5,266.9L1017.0,261.6L1017.1,259.6L1018.5,256.9L1019.9,256.2L1019.9,254.2L1021.9,251.5L1020.7,249.7L1021.2,247.8L1022.6,247.0L1024.4,244.0L1027.4,244.4L1033.1,243.3L1035.0,243.9L1040.7,240.2L1044.5,240.5L1045.8,238.6L1048.5,238.8L1048.9,234.9L1050.6,232.9L1053.1,232.8L1054.7,231.0L1056.6,230.4L1058.2,230.9L1059.0,230.1L1060.5,231.3L1061.5,227.2L1064.3,228.0L1067.6,225.0L1066.3,224.7L1066.8,221.2L1065.7,219.6L1067.1,218.4L1065.3,217.4L1064.8,216.0L1067.5,210.2L1065.8,205.0L1070.1,204.4L1071.3,202.9L1074.9,203.3L1076.2,202.4L1076.3,197.8L1080.4,197.1L1082.3,197.6L1083.1,196.0L1087.2,197.1L1089.8,194.6L1091.5,195.9L1093.6,194.8L1095.8,195.3L1096.4,193.4L1095.6,192.3L1098.3,190.6L1098.4,188.9L1100.1,189.0L1102.3,186.9L1104.0,186.5L1109.0,181.9L1113.8,182.7L1118.6,181.4L1118.7,180.3L1119.6,180.3L1120.8,178.4L1123.1,178.6L1123.6,176.6L1126.1,175.5L1125.2,173.7L1125.0,170.3L1128.5,168.0L1128.2,166.7L1132.2,166.3L1134.4,164.5L1136.4,165.7L1140.6,165.0L1147.5,158.1L1145.3,153.8L1144.0,153.2L1142.9,151.4L1143.7,148.1L1145.4,146.1L1147.2,146.4L1149.8,145.0L1153.1,146.0L1156.5,144.8L1158.4,145.1L1161.0,143.8L1162.8,141.3L1165.2,141.2L1166.6,139.6L1172.4,139.1L1175.9,136.6L1181.5,136.8L1182.5,138.4L1179.7,138.5L1175.8,140.4L1175.0,141.7L1173.3,141.5L1170.2,143.0L1167.8,147.1L1167.9,148.2L1163.4,151.0L1163.1,153.1L1163.0,152.4L1162.3,153.1L1161.3,152.5L1158.6,154.1L1157.5,156.1L1158.1,157.5L1157.0,158.7L1157.3,160.6L1153.2,165.4L1153.1,164.6L1152.2,165.3L1152.8,165.5L1151.3,165.6L1149.1,168.8L1147.0,169.6L1143.2,176.0L1144.0,176.5L1143.6,178.1L1143.6,177.2L1142.6,177.6L1142.0,176.9L1140.9,179.1L1142.0,177.8L1143.4,178.5L1142.0,178.9L1138.6,189.2L1136.6,201.6L1136.3,208.8L1137.7,220.1L1142.1,230.1L1142.6,243.6L1144.9,253.7Z","cx":1120.6,"cy":231.9,"w":202.7,"h":231.3,"bx":979.8,"by":136.5,"x2":1182.6,"y2":367.9},"花蓮縣":{"d":"M998.7,717.4L998.9,722.2L997.2,722.8L996.7,724.6L993.1,728.0L993.6,730.8L991.0,735.2L992.5,737.8L989.1,740.1L989.3,742.7L985.5,753.4L983.9,752.6L981.9,753.2L981.4,756.3L980.0,757.8L981.5,761.2L983.1,762.2L981.0,767.1L981.4,774.2L979.5,776.7L976.2,776.1L972.0,776.8L966.0,780.7L965.5,779.6L963.5,778.6L964.4,775.2L962.0,772.8L961.4,771.1L958.8,769.2L957.5,770.3L955.4,770.2L953.0,766.6L947.1,764.9L947.3,761.3L943.1,754.4L942.8,749.8L940.1,744.6L935.7,742.5L931.2,743.9L929.2,746.2L926.8,746.2L924.5,745.2L921.3,738.0L914.2,737.8L910.0,734.4L905.4,734.5L905.4,733.1L903.1,730.0L902.6,727.1L900.4,723.4L900.3,718.8L898.5,715.1L894.4,713.1L893.1,711.6L889.8,712.8L891.0,710.6L895.3,709.0L896.2,703.2L889.3,699.0L887.2,694.6L885.8,696.0L884.2,696.2L883.3,694.1L881.2,692.7L876.9,691.8L876.8,689.3L877.2,687.8L878.3,687.4L880.9,683.8L883.4,682.9L881.3,680.6L882.0,679.5L884.3,679.4L886.9,677.3L887.7,677.8L889.8,676.5L888.7,672.8L889.6,672.2L890.1,670.1L888.0,669.3L887.5,667.8L885.0,666.5L887.8,664.5L889.2,664.5L891.8,662.1L897.1,660.4L899.1,657.3L899.4,656.7L897.0,655.9L896.4,654.6L893.2,652.5L897.6,647.9L897.8,645.2L900.4,643.8L901.6,641.6L902.3,637.4L908.4,638.9L909.6,638.7L911.4,636.3L913.3,637.2L917.7,636.3L923.2,638.6L926.1,634.9L928.1,634.5L926.8,632.1L928.1,628.5L926.6,625.1L928.3,623.1L930.0,623.4L931.0,621.0L931.0,619.9L928.4,618.8L928.8,614.1L933.0,614.0L936.6,615.5L937.0,613.1L940.0,611.4L941.6,609.4L943.4,610.8L945.4,611.0L947.6,609.4L948.8,604.6L950.8,601.7L950.9,596.4L954.6,588.3L954.6,585.4L953.5,583.4L955.7,580.0L956.3,576.1L955.7,575.6L956.3,572.6L955.2,568.7L955.7,567.3L954.6,567.2L953.7,565.3L952.6,565.3L952.4,560.4L953.8,559.1L953.5,558.3L950.1,557.6L945.4,554.2L946.1,553.1L944.8,550.9L952.9,545.5L951.7,544.1L951.5,540.7L952.0,538.6L954.2,537.4L954.3,535.3L955.6,534.0L954.8,532.9L955.7,527.7L958.7,523.7L960.0,518.3L961.5,516.8L963.8,516.6L963.1,514.0L964.8,512.9L963.8,510.4L964.2,507.9L962.9,507.7L962.5,506.5L964.1,504.9L966.7,504.9L967.1,504.1L967.3,499.4L965.9,494.4L966.6,491.8L965.8,490.9L966.7,489.9L967.7,485.0L966.3,481.8L963.4,481.4L962.2,475.9L965.3,471.0L967.3,464.9L970.1,459.8L969.4,454.8L973.2,451.6L974.5,452.3L977.2,448.4L981.8,444.4L980.5,441.0L982.7,438.4L983.4,435.1L983.5,434.3L982.4,433.8L979.5,433.6L973.2,428.1L968.8,427.1L969.8,421.5L968.5,419.6L971.0,419.5L970.3,412.9L976.9,411.8L979.6,410.2L982.5,406.6L985.7,405.3L990.0,405.1L990.0,401.5L987.9,397.0L990.8,393.3L990.9,390.1L993.5,390.0L995.4,387.2L1001.0,386.3L1001.2,383.2L999.6,377.8L1002.8,374.4L1004.5,374.8L1006.7,372.0L1007.2,368.1L1012.5,368.3L1014.4,365.1L1016.4,363.5L1015.8,360.5L1017.4,356.5L1016.7,354.7L1018.5,350.9L1020.3,350.6L1021.8,348.8L1026.3,352.3L1032.6,354.6L1036.5,357.7L1038.4,356.5L1041.3,357.2L1044.1,356.5L1047.4,358.5L1051.2,358.3L1054.5,360.5L1055.7,363.3L1057.8,364.6L1060.9,364.4L1065.0,366.4L1067.4,365.6L1070.1,367.9L1069.9,365.3L1066.9,360.3L1068.0,359.7L1069.6,361.2L1070.7,359.0L1073.7,359.7L1074.1,359.0L1073.3,358.1L1074.2,355.6L1075.4,357.7L1076.9,357.1L1076.6,358.9L1077.2,359.6L1078.5,359.3L1078.1,356.1L1079.3,355.9L1079.4,354.9L1076.7,354.2L1076.6,352.6L1074.9,351.4L1075.6,349.9L1074.6,349.6L1075.1,348.4L1078.0,347.1L1077.8,348.5L1079.1,348.4L1079.2,349.4L1083.5,354.2L1084.1,353.8L1083.2,351.4L1084.1,350.7L1085.0,353.3L1088.0,353.1L1089.8,356.4L1091.4,356.3L1091.6,358.2L1095.0,357.2L1095.9,359.7L1098.0,359.2L1103.7,362.0L1113.4,363.3L1118.1,366.3L1122.5,366.2L1122.4,367.3L1121.3,369.8L1115.1,376.7L1113.0,384.9L1108.3,389.6L1104.7,390.6L1101.3,396.4L1091.6,402.4L1088.5,406.3L1087.0,410.5L1086.6,414.7L1089.0,422.7L1088.2,426.4L1086.3,426.2L1088.0,427.4L1084.9,432.3L1077.1,438.3L1074.0,444.1L1073.2,449.9L1074.4,456.0L1078.0,463.3L1081.9,466.9L1083.0,470.5L1077.0,483.7L1079.0,480.2L1080.0,474.1L1081.1,473.2L1080.4,473.4L1080.2,471.5L1080.1,473.0L1079.3,472.8L1079.7,475.6L1079.0,477.1L1075.1,480.0L1076.3,482.4L1074.4,480.6L1070.2,487.9L1071.8,496.0L1069.9,502.0L1069.7,509.6L1067.7,520.8L1064.4,531.8L1063.5,531.7L1063.1,534.3L1059.9,540.5L1059.0,548.0L1059.0,553.1L1059.8,555.1L1055.8,565.5L1054.7,567.1L1053.5,567.3L1052.4,570.2L1052.4,574.5L1053.0,575.8L1053.7,575.8L1049.9,589.0L1050.5,591.0L1048.2,592.9L1046.7,599.3L1046.3,610.7L1045.2,617.2L1040.5,625.6L1039.0,631.8L1039.5,632.8L1038.5,633.7L1037.8,637.0L1038.7,644.7L1039.3,645.1L1038.7,644.9L1038.6,645.6L1039.1,646.6L1039.2,645.3L1039.6,646.6L1041.2,646.6L1041.3,649.4L1039.8,650.8L1039.4,653.2L1037.8,655.5L1035.8,665.9L1034.1,665.8L1031.6,667.5L1028.7,663.9L1025.6,664.6L1025.0,663.6L1020.5,662.9L1018.4,666.4L1016.2,666.6L1012.2,670.7L1009.7,676.9L1005.8,682.7L1007.2,688.9L1012.9,691.4L1012.8,693.0L1008.9,696.2L1006.5,700.3L1005.8,703.9L1002.8,704.8L1002.1,708.2L998.9,711.5L998.7,717.4Z","cx":1005.2,"cy":572.2,"w":245.7,"h":433.7,"bx":876.8,"by":347.1,"x2":1122.5,"y2":780.7},"臺東縣":{"d":"M1071.0,1173.7L1069.3,1171.1L1072.6,1170.4L1072.8,1173.1L1071.0,1173.7ZM1037.2,934.5L1040.0,938.9L1035.8,939.2L1033.4,936.0L1028.6,934.6L1028.9,930.1L1029.5,930.2L1025.9,926.4L1025.8,923.6L1028.4,923.7L1028.5,924.6L1034.5,923.1L1035.0,924.6L1040.0,923.5L1040.4,926.9L1041.1,927.6L1039.3,930.2L1039.5,931.9L1037.2,934.5ZM1020.5,662.9L1025.0,663.6L1025.6,664.6L1028.7,663.9L1031.6,667.5L1034.1,665.8L1035.8,665.9L1032.1,674.0L1031.3,678.6L1030.0,679.4L1029.1,682.2L1028.1,693.9L1027.1,695.7L1027.0,701.0L1025.4,706.9L1024.0,707.7L1022.5,707.2L1020.6,708.4L1015.2,716.6L1014.3,723.0L1012.7,724.7L1010.2,734.5L1010.1,735.9L1012.1,737.1L1009.0,741.3L1006.7,741.7L1004.7,744.4L1005.1,750.6L1007.1,753.4L1006.5,754.9L1008.1,757.6L1007.5,760.2L1006.5,759.9L1006.6,760.7L1007.4,760.6L1007.1,761.6L1005.7,763.3L1006.1,769.4L1009.1,772.0L1011.2,771.0L1013.6,771.0L1009.3,772.5L1006.6,775.2L1004.7,774.1L1001.8,778.1L1000.5,781.6L999.6,781.5L1000.1,781.1L999.6,780.2L998.8,780.5L999.7,781.2L995.5,781.1L994.3,782.2L991.7,786.8L992.3,788.8L989.7,790.9L989.0,796.6L987.0,801.0L986.8,804.7L985.6,806.1L986.0,807.3L983.3,809.0L983.0,811.6L981.5,813.4L981.6,816.3L979.9,820.1L973.1,829.6L971.6,829.4L970.4,830.5L970.8,831.3L969.5,831.5L968.0,837.6L959.3,852.9L958.1,854.5L955.6,855.4L954.0,860.0L951.4,859.0L949.6,860.1L946.0,860.1L940.2,865.6L939.1,871.0L941.0,873.5L941.1,875.7L942.8,877.2L942.3,877.9L943.7,883.6L941.8,885.5L940.0,884.9L938.1,886.5L936.6,894.5L935.3,897.0L929.9,900.1L919.8,910.4L905.6,917.4L899.9,923.1L892.0,927.3L888.9,931.4L885.0,943.3L883.8,954.1L876.5,960.7L873.8,966.0L868.3,982.5L864.3,999.0L854.4,1023.6L852.5,1032.4L850.5,1034.7L848.2,1040.6L847.1,1058.4L848.6,1070.8L844.8,1072.8L843.6,1074.9L839.2,1076.5L837.9,1076.2L838.6,1075.0L836.8,1072.7L829.3,1071.2L826.6,1067.3L823.3,1065.1L818.2,1067.2L818.4,1064.4L817.3,1062.8L817.9,1060.6L820.6,1060.3L820.2,1058.0L816.4,1057.4L815.3,1054.8L811.8,1053.6L811.3,1051.6L811.7,1049.6L814.5,1049.4L817.5,1046.6L816.4,1044.5L816.2,1040.4L813.8,1037.0L810.8,1035.7L808.3,1036.3L807.1,1034.7L807.0,1032.4L803.8,1032.0L800.8,1029.6L802.5,1027.6L803.0,1023.9L804.9,1022.4L803.6,1021.0L805.3,1019.1L804.0,1016.8L807.7,1015.4L809.5,1016.2L812.2,1015.3L815.2,1012.4L812.9,1006.7L810.7,1003.7L811.1,1001.4L807.6,1000.4L805.4,998.5L803.2,998.4L804.3,994.2L803.1,991.5L805.3,990.5L805.6,988.4L807.2,987.5L807.4,986.0L806.6,983.7L804.0,980.5L802.9,972.7L799.5,966.5L799.7,962.9L800.4,960.9L802.5,959.8L801.6,953.9L804.3,950.1L803.8,946.3L804.5,944.4L806.4,941.4L806.4,940.2L814.1,929.4L814.2,925.8L815.9,923.3L814.4,918.7L821.3,920.3L822.1,919.0L824.5,919.4L824.8,917.7L830.0,917.3L831.0,914.1L832.0,913.7L831.8,912.8L833.7,910.5L835.6,910.3L836.7,911.6L837.7,910.6L844.5,910.5L848.2,903.1L848.3,897.1L848.1,895.0L847.2,894.5L849.8,892.7L850.9,890.5L851.0,887.7L850.3,886.4L850.8,882.3L850.0,880.7L847.0,878.2L840.8,877.1L838.8,873.7L837.7,873.2L838.9,870.1L838.8,866.5L839.8,864.9L839.3,863.9L840.2,862.5L837.0,860.7L839.0,858.5L837.2,855.5L831.1,854.2L828.9,848.1L827.5,846.8L827.9,844.9L828.9,843.9L828.3,841.4L825.3,836.1L825.3,832.7L826.2,830.2L825.0,827.0L827.9,824.3L827.6,822.9L828.6,820.7L831.3,819.5L831.6,817.1L833.8,815.9L834.8,814.1L834.4,812.3L836.7,812.3L837.4,811.3L837.8,803.5L843.4,802.1L843.4,797.8L841.8,796.7L840.1,793.7L845.2,783.8L846.4,776.5L845.0,773.4L846.0,772.3L845.2,764.8L842.4,762.5L848.2,759.3L849.3,753.9L853.2,751.9L853.3,749.3L851.6,746.1L851.8,744.0L853.3,742.8L853.3,736.4L854.6,733.1L857.9,730.8L859.5,731.4L861.5,730.6L862.6,728.2L864.3,727.8L867.7,724.0L868.3,721.8L872.2,718.0L876.8,718.5L884.1,714.4L888.4,714.0L893.1,711.6L894.4,713.1L898.4,715.0L899.5,716.5L900.3,718.8L900.4,723.4L905.6,734.7L910.0,734.4L914.9,737.9L918.9,737.4L921.3,738.0L924.5,745.2L926.8,746.2L929.2,746.2L931.2,743.9L935.7,742.5L940.1,744.6L942.8,749.8L943.1,754.4L947.3,761.3L947.1,764.9L953.0,766.6L955.4,770.2L957.5,770.3L958.8,769.2L961.4,771.1L962.0,772.8L964.4,775.2L963.5,778.6L965.5,779.6L966.0,780.7L972.0,776.8L976.2,776.1L979.5,776.7L981.5,774.1L981.0,767.1L983.1,762.2L981.5,761.2L980.0,757.9L980.4,756.8L981.4,756.3L981.9,753.2L983.9,752.6L985.5,753.4L989.3,742.7L989.1,740.1L992.5,737.8L991.0,735.2L993.6,730.8L993.1,728.0L996.7,724.6L997.2,722.8L998.9,722.2L998.9,711.5L1002.1,708.2L1002.8,704.8L1005.8,703.9L1006.5,700.3L1008.9,696.2L1012.8,693.0L1012.9,691.4L1007.2,688.9L1005.9,682.2L1009.1,678.2L1012.2,670.7L1016.2,666.6L1018.4,666.4L1020.5,662.9ZM1040.0,1131.2L1036.9,1127.2L1038.7,1125.5L1041.0,1127.2L1045.2,1126.6L1046.6,1127.9L1048.0,1126.7L1051.1,1126.4L1054.9,1126.3L1055.8,1127.3L1058.5,1125.3L1059.3,1127.3L1058.4,1129.3L1058.6,1132.0L1060.8,1134.2L1057.8,1134.9L1057.1,1137.7L1058.1,1140.9L1068.2,1147.0L1068.5,1148.8L1066.4,1153.6L1064.2,1154.5L1062.3,1153.1L1059.1,1153.8L1058.7,1151.8L1055.0,1147.0L1052.2,1145.8L1048.3,1146.2L1041.8,1138.9L1039.8,1139.1L1040.6,1137.4L1039.3,1135.1L1040.4,1132.7L1040.0,1131.2Z","cx":931.9,"cy":830.1,"w":273.5,"h":510.9,"bx":799.5,"by":662.8,"x2":1072.9,"y2":1173.7},"澎湖縣":{"d":"M387.6,744.6L384.9,742.0L384.3,740.3L385.4,741.0L386.0,740.0L388.4,739.4L393.8,738.6L396.4,739.1L394.9,741.4L394.8,745.8L392.7,745.2L390.7,747.0L390.9,750.5L388.1,748.9L387.6,747.5L388.2,747.8L388.2,747.2L387.3,747.7L387.6,744.6ZM443.4,552.1L444.4,552.0L446.0,549.9L446.1,551.4L444.6,552.6L443.1,555.9L442.7,554.4L443.4,552.1ZM445.8,558.0L447.4,555.5L447.6,557.4L450.7,558.7L451.2,560.6L450.1,560.9L450.0,561.8L448.8,561.3L448.7,562.7L448.6,561.6L447.1,561.5L446.9,562.4L448.5,562.8L446.3,562.5L444.8,564.7L444.6,566.9L443.9,563.7L442.6,562.2L445.0,560.1L445.8,558.0ZM429.8,572.6L429.2,571.6L430.1,569.7L428.5,569.0L429.0,568.1L428.7,568.8L431.0,568.7L430.3,570.4L430.9,571.8L429.8,572.6ZM462.3,589.5L461.2,588.7L463.1,588.0L463.9,585.7L464.8,586.2L464.2,588.0L464.9,589.0L461.7,589.3L462.3,589.5ZM415.4,726.9L416.6,726.3L417.6,724.2L419.4,724.0L417.7,727.2L416.7,726.9L416.0,727.7L415.4,726.9ZM464.2,725.9L465.9,724.3L468.6,724.4L468.2,726.7L466.5,728.5L467.0,730.0L466.4,730.9L464.0,728.7L464.7,727.2L465.0,727.7L464.2,725.9ZM447.0,729.8L446.5,728.4L448.0,727.6L450.6,728.0L449.9,729.3L450.5,730.7L449.0,731.0L447.0,729.8ZM410.2,684.1L411.3,682.0L409.3,679.6L409.7,678.9L411.0,678.8L413.0,681.5L414.5,679.7L415.2,685.7L416.8,685.6L415.1,687.3L416.8,687.7L417.1,686.3L417.8,686.8L417.2,687.8L417.7,688.7L414.8,690.2L416.7,693.9L413.5,692.8L409.7,693.8L408.3,692.7L410.9,689.5L410.2,684.1ZM354.9,677.6L356.2,673.7L359.7,676.1L357.6,678.2L355.7,678.6L354.9,677.6ZM420.0,689.3L420.9,688.8L420.6,688.0L421.2,688.5L421.0,687.7L420.5,688.0L421.1,687.2L422.9,687.2L424.0,686.0L425.3,687.1L426.3,689.6L422.7,689.0L420.7,690.4L420.2,692.3L420.2,691.3L419.0,691.4L418.7,690.6L419.3,690.6L418.4,690.0L418.7,689.0L420.0,689.3ZM416.1,723.3L414.1,722.6L413.5,721.1L415.7,721.0L416.1,723.3ZM418.6,640.7L417.1,640.5L417.6,638.7L418.4,639.5L419.4,638.7L419.5,640.3L418.6,640.7ZM416.3,649.5L415.4,648.6L415.8,646.6L417.4,648.3L419.1,646.3L421.7,645.1L424.3,644.3L426.3,645.6L421.6,648.2L416.3,649.5ZM437.9,588.6L434.8,588.4L432.3,592.1L429.6,590.0L430.1,590.7L429.5,590.2L425.8,594.9L425.3,595.8L426.3,595.7L426.0,596.7L424.9,598.5L424.3,598.0L424.6,598.6L423.6,598.2L422.0,599.3L419.8,599.8L420.4,599.2L419.5,598.9L418.2,599.7L419.8,609.0L418.7,611.5L416.4,612.3L417.7,614.6L416.7,616.5L417.2,615.7L416.3,616.2L416.5,617.9L417.3,618.3L416.7,619.7L418.2,620.7L417.7,621.6L412.7,621.4L412.9,620.7L411.4,620.5L409.4,622.3L406.5,622.3L407.3,621.8L406.5,621.7L405.3,623.3L403.9,623.5L402.4,622.8L403.1,621.4L405.7,620.2L406.8,618.0L410.0,619.9L413.6,616.7L413.9,614.1L413.3,612.9L409.3,611.6L410.8,610.9L409.9,610.1L410.7,608.9L412.0,609.4L412.1,611.1L414.0,610.5L413.4,607.7L415.4,605.3L414.4,603.7L413.9,604.5L412.4,602.8L413.9,601.5L413.3,599.1L413.8,597.5L414.9,597.4L416.4,593.1L418.7,593.2L418.0,591.8L417.0,591.9L417.0,590.7L420.1,590.6L420.2,592.1L418.7,593.4L419.4,595.1L420.6,594.6L422.2,596.3L424.6,596.1L429.5,590.0L428.5,588.2L429.8,586.3L434.0,585.0L434.5,585.7L433.9,584.9L434.9,585.2L438.3,583.2L441.0,585.2L443.8,584.5L444.4,586.1L445.5,586.4L444.2,587.3L445.1,587.7L445.3,587.0L445.1,587.9L446.9,587.9L445.8,589.3L448.1,591.6L447.2,593.4L446.4,592.7L444.0,593.2L444.6,595.4L443.0,596.1L444.1,597.6L444.7,596.9L444.1,597.7L444.6,598.1L446.0,597.1L447.0,597.5L446.8,598.5L445.1,598.8L444.6,599.9L445.7,602.5L446.1,602.0L448.0,602.8L448.1,604.8L446.9,606.0L447.8,609.0L449.1,607.9L448.8,609.6L450.2,609.2L450.7,608.6L450.0,607.5L451.7,606.6L452.1,607.3L453.5,607.1L453.8,608.1L452.5,608.3L451.7,609.5L452.5,611.1L451.5,612.1L451.9,615.4L451.4,616.6L453.0,616.6L454.5,613.1L454.1,611.2L455.5,610.0L456.7,610.8L455.6,612.5L456.7,613.4L456.2,613.9L457.5,613.8L457.2,611.9L458.9,611.7L457.4,611.3L458.5,610.7L458.5,608.6L459.4,608.4L459.7,607.1L458.6,607.3L459.8,606.3L460.9,606.6L461.7,608.3L461.1,610.1L463.3,611.4L464.3,611.1L462.6,611.2L463.2,611.5L462.3,612.1L463.2,613.2L465.2,612.7L465.4,611.1L464.7,611.0L465.7,610.8L465.0,610.5L465.5,609.0L466.3,609.2L466.3,610.3L469.6,615.1L468.8,618.2L469.8,621.3L471.4,622.7L472.7,621.9L472.3,622.9L473.3,623.1L472.8,623.7L473.8,625.4L471.4,625.1L468.1,626.2L467.0,625.1L466.9,623.8L467.8,624.3L467.6,623.3L466.0,622.5L458.0,623.2L456.1,624.8L456.6,626.1L454.6,626.2L454.8,627.8L453.1,627.4L451.7,628.9L451.3,628.4L450.2,629.4L450.5,630.7L448.3,630.7L446.7,633.5L445.5,633.9L445.8,636.1L447.5,636.2L447.4,637.3L445.5,638.1L446.1,641.0L441.3,639.3L436.2,641.2L435.0,640.7L434.7,639.2L435.7,637.7L435.2,636.2L432.7,634.7L430.4,635.7L429.3,632.8L427.7,632.1L428.0,630.4L426.3,631.0L425.5,630.4L425.8,627.3L426.7,627.8L427.8,625.3L427.6,626.3L428.8,627.2L428.1,629.8L428.6,629.1L428.6,630.0L430.4,630.9L429.8,633.8L431.7,634.6L431.3,634.0L433.2,633.0L433.1,631.9L433.8,633.1L435.0,632.8L434.8,633.8L435.8,634.2L434.9,635.1L435.8,637.0L437.7,635.6L437.7,633.0L438.4,632.5L439.7,633.9L439.9,633.0L440.9,633.0L442.6,634.6L443.8,632.7L442.5,632.6L443.1,632.4L442.3,630.7L444.8,630.0L443.8,628.2L445.1,627.2L443.7,626.6L442.1,627.2L442.4,626.4L441.1,626.2L441.3,625.5L441.0,626.7L441.0,625.9L440.2,626.6L439.9,625.9L439.6,626.8L438.0,626.7L435.5,628.2L435.2,626.9L434.0,627.2L434.2,626.2L432.8,627.4L432.1,626.6L433.1,625.7L432.0,625.8L431.9,624.3L434.9,625.6L436.2,625.0L435.3,623.5L436.4,624.3L436.8,623.7L435.2,622.2L436.6,623.1L436.4,622.1L437.5,622.1L436.0,621.5L435.8,620.5L434.1,621.4L434.8,621.5L433.9,622.5L434.1,621.7L430.8,623.0L430.0,622.1L431.2,621.8L431.3,620.2L432.2,620.1L432.0,619.3L431.3,619.7L433.7,618.1L431.9,614.7L435.9,614.7L438.1,613.0L438.6,611.6L438.6,613.2L439.5,614.1L438.3,615.4L439.3,616.1L438.1,616.4L439.6,617.0L440.3,616.1L439.3,617.8L439.8,619.4L442.0,618.2L441.9,619.7L443.0,620.2L443.2,618.2L444.5,617.4L443.0,617.5L443.6,617.5L443.3,615.5L446.1,614.4L446.1,610.7L445.3,610.8L444.8,609.3L445.6,607.7L447.7,607.8L446.9,606.0L445.2,606.5L443.0,604.2L445.5,602.7L445.2,601.1L443.8,602.7L442.4,601.2L440.2,601.9L442.5,597.5L442.0,595.6L440.0,594.6L440.2,593.6L438.3,591.7L438.5,590.6L437.4,590.4L438.4,589.8L437.9,588.6Z","cx":437.5,"cy":612.9,"w":129.0,"h":208.4,"bx":354.6,"by":542.0,"x2":483.6,"y2":750.5}},"meta":{"scale":340.7233922809952,"bbox":[119.31428186049466,21.896606934716964,122.00708934643386,25.301128098451287],"frame":[350,30,850,1160],"lat0":23.598867516584125,"km_per_px":0.3267166344369869,"proj_origin":[354.61382165905303,30.0]},"frame":{"x":350,"y":30,"w":850,"h":1160,"title_y":20},"title":"臺灣本島與澎湖","grat":[{"x1":568.7,"y1":32,"x2":568.7,"y2":1188},{"x1":880.9,"y1":32,"x2":880.9,"y2":1188},{"x1":352,"y1":1154.8,"x2":1198,"y2":1154.8},{"x1":352,"y1":814.0,"x2":1198,"y2":814.0},{"x1":352,"y1":473.3,"x2":1198,"y2":473.3},{"x1":352,"y1":132.6,"x2":1198,"y2":132.6}],"gratLabels":[{"x":568.7,"y":50,"t":"120°E"},{"x":880.9,"y":50,"t":"121°E"},{"x":358,"y":1158.8,"t":"22°N"},{"x":358,"y":818.0,"t":"23°N"},{"x":358,"y":477.3,"t":"24°N"},{"x":358,"y":136.6,"t":"25°N"}]},"insets":[{"name":"金門縣","paths":{"金門縣":{"d":"M176.4,177.6L165.7,183.2L160.0,189.5L159.2,191.7L156.0,195.3L153.0,200.7L151.2,208.1L148.4,213.5L145.9,215.0L144.1,214.5L142.6,216.5L139.6,216.1L138.4,214.1L136.6,214.0L135.7,212.6L133.8,211.9L131.9,212.5L131.8,211.7L130.7,211.9L130.2,210.4L129.3,210.3L129.4,209.3L128.5,209.4L127.8,207.9L126.7,207.2L124.4,206.4L119.7,207.0L120.2,205.3L119.0,204.6L118.8,203.2L115.4,201.5L114.2,198.6L111.8,197.8L109.7,195.3L106.8,193.7L105.0,191.0L106.4,189.4L110.0,189.1L110.4,189.8L110.3,189.2L111.9,189.6L112.0,188.5L111.9,189.6L112.5,189.7L114.0,188.4L116.0,190.6L118.0,191.1L119.5,190.6L122.6,188.6L124.4,185.1L124.8,183.1L123.7,182.1L123.8,181.3L127.0,178.8L129.8,179.4L131.9,177.7L130.1,173.4L130.3,167.7L129.6,163.7L127.7,158.6L124.5,153.9L124.2,150.1L125.5,147.6L120.2,145.1L112.5,140.1L114.4,137.9L116.2,132.3L118.8,130.4L122.5,129.7L123.8,127.4L127.3,124.0L131.0,124.3L131.6,123.6L131.2,121.9L132.3,121.6L133.8,122.4L134.9,122.0L136.0,123.6L137.1,123.6L139.8,125.5L144.8,131.2L150.6,136.2L160.0,142.7L165.2,145.0L167.7,144.4L179.6,148.0L183.6,147.8L186.9,144.0L188.7,143.6L188.2,141.5L189.3,140.0L188.7,142.3L189.6,144.0L192.5,142.2L194.2,137.5L194.2,135.2L193.1,132.5L190.8,129.6L189.7,129.6L189.9,128.8L188.1,127.8L194.7,127.8L195.5,126.8L194.9,125.5L196.4,125.0L196.9,123.7L200.8,122.1L201.3,121.0L200.5,116.3L198.4,114.3L200.4,113.2L200.5,107.9L199.2,104.5L200.5,103.1L205.3,102.7L207.7,101.5L210.0,98.8L214.6,97.5L215.3,94.9L213.2,92.1L213.7,89.8L212.1,89.7L211.2,88.1L211.9,86.2L213.3,86.5L213.6,87.8L214.4,87.6L213.9,88.6L214.8,90.1L217.1,90.9L218.4,90.3L217.4,89.7L217.6,89.3L219.6,87.9L220.9,87.6L222.6,88.5L223.8,86.7L224.6,86.8L224.0,88.6L226.2,89.7L226.8,89.0L227.9,89.2L227.3,90.8L226.3,90.8L226.4,91.9L228.4,94.7L229.2,98.9L232.3,105.0L234.5,104.2L235.1,104.9L237.6,104.7L239.4,105.9L241.6,104.2L243.2,104.9L243.5,105.9L244.5,105.0L245.7,105.7L245.0,110.3L245.6,114.7L246.5,116.7L248.6,117.4L248.6,119.2L249.4,119.6L251.8,127.0L254.0,130.8L255.4,131.8L257.4,129.4L258.8,129.9L260.3,129.3L261.0,129.7L261.1,131.0L262.4,131.6L261.8,132.4L260.5,131.6L260.4,132.4L259.5,132.3L258.8,133.2L259.0,133.9L256.5,134.9L256.1,135.7L256.2,137.9L257.4,138.3L256.3,139.3L257.1,147.2L258.5,152.0L260.8,155.9L262.8,156.9L265.0,155.9L264.5,156.6L265.2,156.6L265.5,157.7L264.9,160.3L263.9,160.6L264.2,161.0L263.4,161.5L264.1,161.7L263.5,162.5L263.8,163.3L265.9,162.6L264.3,164.0L265.3,166.0L264.0,165.7L263.7,167.0L262.5,167.3L260.7,165.8L259.0,165.9L257.6,167.0L257.4,168.8L256.7,168.8L255.8,170.1L256.2,171.9L257.3,172.4L257.0,174.3L257.8,175.0L257.2,176.4L258.4,176.7L258.7,176.2L259.5,177.5L257.1,178.8L255.8,180.9L254.7,181.1L253.3,179.9L251.5,180.4L249.8,183.2L250.2,187.2L248.0,190.0L245.7,189.4L243.0,191.0L241.0,193.3L236.2,193.8L236.5,195.6L235.7,195.2L234.0,196.3L231.6,195.9L230.4,197.0L228.5,197.1L228.0,196.6L228.5,196.2L227.1,194.9L228.1,195.8L231.7,195.3L232.8,194.0L232.6,191.9L228.2,192.4L226.8,193.5L228.0,192.2L232.8,191.7L233.6,190.6L231.7,185.7L229.6,183.0L228.8,180.9L216.9,178.6L214.4,177.2L213.1,178.3L214.2,177.1L213.7,176.0L214.4,175.1L213.7,174.7L212.7,177.1L212.9,176.1L208.1,172.3L201.9,171.5L201.5,170.5L193.9,171.6L180.7,175.6L176.4,177.6ZM92.9,180.4L91.9,183.2L90.1,183.2L89.8,180.9L87.5,180.4L83.8,181.1L81.4,182.4L78.6,185.7L78.5,187.8L80.1,188.5L78.2,190.9L75.0,193.0L74.4,192.3L75.0,190.9L74.1,190.2L72.2,190.0L69.3,190.8L65.3,193.8L61.8,199.1L60.2,198.0L58.7,195.1L54.9,194.5L52.4,194.8L50.0,191.9L52.6,192.5L55.5,189.5L56.8,189.4L56.8,186.0L54.8,180.1L56.5,179.1L60.6,178.5L63.1,175.8L64.3,168.2L64.2,163.9L65.3,160.2L70.0,158.4L76.6,158.8L76.8,156.2L78.7,155.1L81.9,156.0L83.0,155.6L92.3,163.3L95.9,164.1L95.3,166.0L95.4,170.5L92.9,172.8L94.1,177.1L92.2,179.8L92.9,180.4ZM234.7,91.8L237.5,90.3L237.7,91.4L235.6,92.7L234.1,92.7L234.7,91.8ZM64.5,199.3L65.5,199.4L66.5,200.5L64.4,200.8L64.0,199.7L64.5,199.3ZM214.8,86.4L214.9,85.5L216.5,86.7L215.2,87.3L214.8,86.4ZM252.4,189.6L252.8,190.6L251.5,191.8L252.4,189.6ZM267.7,160.0L268.7,159.5L266.3,160.8L265.4,160.5L267.7,160.0Z","cx":196.3,"cy":153.4,"w":220.0,"h":131.0,"bx":50.0,"by":85.5,"x2":270.0,"y2":216.5}},"meta":{"scale":905.0219683298587,"bbox":[118.21134755512834,24.38545243108965,118.47839911273182,24.53020301930993],"frame":[50,62,220,178],"lat0":24.45782772519979,"km_per_px":0.12300253904933557,"proj_origin":[50.0,85.49876886598878]},"frame":{"x":50,"y":62,"w":220,"h":178,"title_y":48},"zoom":2.7},{"name":"連江縣","paths":{"連江縣":{"d":"M70.5,480.0L70.0,480.2L69.5,482.8L68.4,483.2L67.7,485.3L66.7,485.9L65.9,484.8L65.0,484.9L64.7,486.5L62.1,488.9L60.6,489.0L60.2,487.9L59.4,488.0L57.4,489.5L57.9,490.3L55.5,491.0L55.2,489.5L53.1,489.8L51.4,489.2L51.3,488.2L50.5,488.6L50.0,488.0L52.1,484.8L51.9,484.2L53.1,483.0L52.4,482.1L51.3,482.3L52.3,480.9L53.1,480.9L53.6,479.7L52.3,478.3L52.9,475.8L54.1,475.9L55.0,477.3L57.5,477.2L57.2,478.2L56.3,478.1L55.5,481.2L57.1,481.9L58.3,481.3L58.0,482.4L59.6,482.3L59.7,484.1L62.7,482.8L62.0,482.5L62.7,481.7L61.4,481.0L62.6,481.2L62.7,480.0L65.7,478.6L66.4,480.3L67.6,478.6L70.5,479.4L71.6,478.6L70.5,480.0ZM82.7,445.6L83.7,446.0L84.6,444.9L85.7,445.2L84.4,447.5L81.8,448.8L81.5,448.1L82.7,445.6ZM86.0,444.7L86.8,443.2L88.8,443.8L88.3,444.5L86.0,444.7ZM76.5,434.1L77.4,433.5L77.1,433.1L78.4,433.2L78.5,432.1L79.8,431.4L80.6,432.0L79.2,433.4L79.3,434.1L80.2,433.7L79.5,434.5L80.6,435.0L79.2,436.2L79.8,437.5L78.9,438.6L76.5,438.8L75.6,437.6L75.9,436.9L75.4,436.5L77.2,435.9L77.6,435.0L76.5,434.1ZM88.5,449.9L89.5,449.8L89.5,450.3L88.5,449.9ZM88.5,449.9L87.4,451.3L87.8,449.4L88.5,449.9ZM88.1,461.9L87.3,461.7L87.9,461.1L88.7,461.3L88.1,461.9ZM88.1,460.1L89.0,460.4L87.7,460.7L87.6,460.0L88.1,460.1ZM73.4,480.1L72.5,481.6L72.2,480.0L73.1,478.5L73.6,479.0L73.2,479.5L73.9,479.6L73.4,480.1ZM264.9,400.2L263.5,402.1L263.2,401.2L261.7,402.0L261.6,401.2L260.9,401.0L260.1,402.6L259.1,401.3L259.9,399.6L259.3,398.8L260.4,399.4L260.8,398.8L260.4,397.3L258.9,396.5L257.7,397.6L257.4,393.2L254.7,396.4L254.8,393.8L256.6,392.9L256.5,391.4L257.8,392.0L258.6,391.1L258.4,391.9L259.3,392.5L259.8,393.8L259.1,396.3L260.6,396.9L261.4,396.1L262.9,396.5L263.7,393.7L265.8,393.5L265.3,395.7L266.3,395.5L267.1,396.5L268.3,395.6L270.0,398.5L269.1,398.9L268.2,398.0L267.4,398.6L266.5,397.3L266.0,399.1L264.9,400.2ZM71.3,558.7L70.2,558.8L70.8,557.3L71.3,558.7ZM69.6,569.0L70.4,568.9L70.4,570.0L69.2,571.2L69.6,569.0ZM74.8,557.7L74.0,559.5L75.6,559.7L76.3,560.6L77.5,559.0L79.3,559.0L78.8,559.8L79.1,560.4L77.4,561.7L77.4,562.8L75.3,563.6L75.5,564.6L74.0,565.4L74.0,566.1L72.8,564.8L70.3,568.1L68.9,567.5L70.6,565.0L70.2,563.9L72.2,563.3L74.0,557.5L74.4,557.1L74.8,557.7ZM53.8,557.5L54.9,555.9L54.8,556.8L53.8,557.5ZM166.8,406.9L164.9,409.3L163.9,409.5L163.8,410.5L162.9,410.7L163.7,408.3L164.5,408.5L166.7,406.2L167.2,406.6L166.8,406.9ZM64.5,467.5L64.0,468.2L64.5,467.5ZM230.3,483.1L231.5,484.1L230.3,483.1ZM73.1,465.8L73.5,467.8L74.5,468.0L74.3,468.8L73.6,469.0L72.9,467.7L71.0,468.1L70.7,464.8L72.0,463.7L71.0,463.1L72.7,460.7L71.5,457.2L72.9,457.4L75.6,455.2L77.2,455.6L80.3,452.6L81.6,450.3L83.3,450.4L84.0,452.2L85.6,451.9L85.2,452.8L85.7,454.6L84.9,455.5L87.2,454.2L88.9,454.6L88.1,455.8L88.6,456.2L86.8,457.9L87.5,458.5L87.5,460.0L86.8,459.8L85.9,456.9L84.8,456.6L83.4,458.2L82.9,457.9L83.5,457.0L82.6,456.8L82.2,458.4L80.7,458.3L79.7,460.0L79.4,458.6L78.1,458.3L74.8,459.8L72.9,462.7L73.5,464.9L73.1,465.8ZM57.6,558.9L55.2,556.2L56.1,554.8L59.0,555.1L62.9,554.1L64.5,554.8L63.8,556.6L62.2,558.2L60.9,558.1L59.5,560.3L58.3,560.4L59.0,559.6L57.6,558.9Z","cx":60.5,"cy":482.8,"w":220.0,"h":182.3,"bx":50.0,"by":388.8,"x2":270.0,"y2":571.2}},"meta":{"scale":406.58297105482706,"bbox":[119.91421284859227,25.93960414161027,120.51707929850008,26.388021444507906],"frame":[50,330,220,300],"lat0":26.163812793059087,"km_per_px":0.273794054166102,"proj_origin":[50.0,388.84058035774365]},"frame":{"x":50,"y":330,"w":220,"h":300,"title_y":316},"zoom":1.2}],"viewBox":[0,0,1220,1220],"mainScale":340.7233922809952};</script>
+<script>/* ==========================================================================
+   台灣族群分布圖鑑 — 應用邏輯（無外部相依）
+   資料：客家委員會《103 年度臺閩地區客家人口推估及客家認同委託研究成果》
+        附表 A-3（單一自我認定、依居住縣市、鄉鎮人口加權）
+   圖資：g0v twgeojson（依內政部縣市界圖）
+   ========================================================================== */
+(function () {
+'use strict';
+
+/* ── 1. 原始資料 ─────────────────────────────────────────────────────── */
+
+/* 原表 8 欄順序（%）：0 臺灣客家人／1 大陸客家人／2 福老人(閩南)／
+   3 大陸各省市人／4 原住民(自我認同)／5 臺灣人／6 其他族群／7 不知道未回答。null＝原表「—」。 */
+var ROWS = [
+  ['基隆市','北部',  811,[ 6.8,  .5, 70.1, 9.7, 2.1, 8.5,  .3, 2.1]],
+  ['臺北市','北部', 3541,[11.4,  .7, 60.3,13.5, 1.0,10.7, 1.1, 1.4]],
+  ['新北市','北部', 6234,[ 9.4,  .8, 67.5, 8.9, 1.0, 9.7, 1.1, 1.6]],
+  ['桃園市','北部', 5928,[32.5, 1.5, 51.3, 8.2, 1.5, 3.3,  .7, 1.0]],
+  ['新竹縣','北部', 6091,[61.3, 1.6, 26.0, 3.4, 3.1, 2.3, 1.3, 1.1]],
+  ['新竹市','北部', 1227,[22.4, 1.9, 62.3, 6.6, 1.4, 3.8,  .4, 1.1]],
+  ['苗栗縣','中部', 7767,[54.3, 1.3, 36.7, 2.1, 1.4, 2.2, 1.5,  .6]],
+  ['臺中市','中部', 7406,[11.2,  .7, 69.8, 6.3, 1.5, 8.2,  .8, 1.5]],
+  ['彰化縣','中部', 2957,[ 4.6,  .7, 78.2, 4.9,  .6, 9.8,  .3, 1.0]],
+  ['南投縣','中部', 3192,[10.0,  .5, 75.4, 3.6, 2.5, 6.1,  .8, 1.0]],
+  ['雲林縣','中部', 2713,[ 5.1,  .2, 81.5, 2.4,  .5, 8.4,  .3, 1.7]],
+  ['嘉義縣','南部', 2747,[ 4.8,  .5, 79.5, 3.5,  .7, 8.7,  .2, 2.0]],
+  ['嘉義市','南部',  206,[ 3.9, 1.4, 76.5, 4.0,  .4,11.3,  .6, 1.9]],
+  ['臺南市','南部', 3942,[ 3.7,  .2, 76.6, 4.0, 1.1,12.4,  .5, 1.4]],
+  ['高雄市','南部', 6191,[ 7.5,  .3, 71.7, 7.1, 1.2, 9.9,  .7, 1.5]],
+  ['屏東縣','南部', 7407,[18.3,  .4, 65.7, 3.6, 5.5, 4.8,  .5, 1.1]],
+  ['宜蘭縣','東部', 1699,[ 3.2,  .6, 79.3, 3.5, 2.0, 8.2, 1.6, 1.6]],
+  ['花蓮縣','東部', 4073,[24.6,  .9, 44.4, 5.5,19.0, 3.3, 1.5,  .7]],
+  ['臺東縣','東部', 3733,[13.6,  .3, 53.5, 5.5,21.8, 3.6, 1.2,  .5]],
+  ['澎湖縣','離島',  106,[ 3.2, null,76.7, 7.7, 1.0, 7.0, 3.1, 1.4]],
+  ['金門縣','離島',  102,[ 3.8, null,78.8, 3.2,  .5, 4.0, 8.8,  .8]],
+  ['連江縣','離島',  101,[  .5, null,68.2,11.7, 3.3, 7.4, 8.0,  .9]]
+];
+
+/* 先前對話留下、未經核實的四族群比例（閩南／客家／外省／原住民），僅供核對 */
+var PRIOR = {
+  '基隆市':[77.8, 6.3,11.5, .8], '臺北市':[60.3,12.1,13.5,1.0], '新北市':[67.5,10.2, 8.9,1.0],
+  '桃園市':[53.1,31.1, 9.5,1.5], '新竹縣':[24.9,63.5, 6.0,2.8], '新竹市':[62.3,24.3, 6.6,1.4],
+  '苗栗縣':[36.7,55.6, 2.1,1.4], '臺中市':[69.8,11.9, 6.3,1.5], '南投縣':[75.4,10.5, 3.6,2.5],
+  '雲林縣':[92.1, 2.9, 2.8, .3], '嘉義縣':[79.5, 5.3, 3.5, .7], '嘉義市':[76.5, 5.3, 4.0, .4],
+  '臺南市':[76.5, 5.3, 4.0, .4], '高雄市':[75.3, 9.5, 8.9,1.4], '屏東縣':[65.7,18.7, 3.6,5.5],
+  '宜蘭縣':[84.8, 4.7, 4.3,3.4], '花蓮縣':[44.4,25.5, 5.5,19.0],'臺東縣':[53.5,13.9, 5.5,21.8]
+};
+
+var RAW_COLS = [
+  { label:'臺灣客家人',            i:0 },
+  { label:'大陸客家人',            i:1 },
+  { label:'福老人（閩南）',        i:2 },
+  { label:'大陸各省市人',          i:3 },
+  { label:'原住民（自我認同）',    i:4 },
+  { label:'臺灣人（原表獨立回答）',i:5 },
+  { label:'其他族群',              i:6 },
+  { label:'不知道／未回答',        i:7 }
+];
+
+var GROUPS = [
+  { key:'minnan',     label:'閩南',   full:'閩南／福老',  color:'#2f6fc4', ramp:['#eef4fc','#1c4f96'], raw:[2] },
+  { key:'hakka',      label:'客家',   full:'客家（合併）',color:'#0d7f6f', ramp:['#e9f6f3','#04574a'], raw:[0,1] },
+  { key:'mainlander', label:'外省',   full:'外省背景',    color:'#8f4fc0', ramp:['#f5eefa','#6a2f9e'], raw:[3] },
+  { key:'indigenous', label:'原住民', full:'原住民認同',  color:'#d2742a', ramp:['#fdf1e6','#a8500f'], raw:[4] }
+];
+var GROUPS_BY_KEY = {};
+GROUPS.forEach(function (g) { GROUPS_BY_KEY[g.key] = g; });
+
+/* 非四族群的量度也需要色階（地圖下拉選單有「多樣性」「其他／未答」） */
+var EXTRA = {
+  diversity: { ramp: ['#f1ecfa', '#3d2373'], color: '#4b2e83', full: '四族群多樣性指數' },
+  other:     { ramp: ['#f4f5f7', '#66707e'], color: '#6b7a8f', full: '其他／未回答' }
+};
+function rampFor(key) { var g = GROUPS_BY_KEY[key]; return g ? g.ramp : EXTRA[key].ramp; }
+function colorForGroup(key) { var g = GROUPS_BY_KEY[key]; return g ? g.color : EXTRA[key].color; }
+function fullLabel(key) { var g = GROUPS_BY_KEY[key]; return g ? g.full : EXTRA[key].full; }
+function shortLabel(key) { var g = GROUPS_BY_KEY[key]; return g ? g.label : (key === 'diversity' ? '多樣性' : '其他／未答'); }
+
+var REGION_COLOR = { '北部':'#3b6fb6', '中部':'#0d7f6f', '南部':'#c2572a', '東部':'#8a5cc4', '離島':'#787f89' };
+var REGIONS = ['北部', '中部', '南部', '東部', '離島'];
+
+var SRC = {
+  survey: '客家委員會《103 年度臺閩地區客家人口推估及客家認同委託研究成果》附表 A-3',
+  period: '2014-01-16 ～ 2014-02-25，依 2013 年底戶籍人口加權',
+  n: 78174,
+  pdf: 'https://www.hakka.gov.tw/File/Attach/1990/1/491012343871.pdf',
+  geo: 'g0v/twgeojson（twCounty2010），依內政部縣市界圖'
+};
+
+/* ── 2. 衍生計算 ─────────────────────────────────────────────────────── */
+
+function r1(x) { return Math.round(x * 10) / 10; }
+function sum(arr) { return arr.reduce(function (a, b) { return a + (b == null ? 0 : b); }, 0); }
+function isNum(v) { return v !== null && v !== undefined && !isNaN(v); }
+function fmt1(v) { return isNum(v) ? v.toFixed(1) : '—'; }
+function pct(v) { return isNum(v) ? v.toFixed(1) + '%' : '未完整'; }
+
+/* 近似 95% 區間（常態近似；未計加權與設計效應，僅供比較尺度參考） */
+function ci95(p, n) {
+  if (!isNum(p) || !n) return null;
+  var f = p / 100;
+  return 1.96 * Math.sqrt(f * (1 - f) / n) * 100;
+}
+
+var DATA = ROWS.map(function (row, ord) {
+  var name = row[0], region = row[1], n = row[2], raw = row[3].slice();
+  var hakka = (raw[0] == null || raw[1] == null) ? null : r1(raw[0] + raw[1]);
+  var knownSum = r1(sum(raw));
+  var fourSum = r1(sum([raw[2], hakka, raw[3], raw[4]]));
+  var other = r1(sum([raw[5], raw[6], raw[7]]));
+  var d = {
+    ord: ord, name: name, region: region, sample: n, raw: raw,
+    minnan: raw[2], hakka: hakka, mainlander: raw[3], indigenous: raw[4],
+    other: other, knownSum: knownSum, fourSum: fourSum,
+    complete: raw.every(isNum),
+    delta: r1(knownSum - 100)
+  };
+  /* 四族群多樣性（Simpson 1 − Σp²，以四族群小計為分母；0＝單一族群、0.75＝完全均分） */
+  var ps = [d.minnan, d.hakka, d.mainlander, d.indigenous];
+  d.diversity = (d.hakka === null || !fourSum) ? null
+    : Math.round((1 - ps.reduce(function (a, p) { return a + Math.pow(p / fourSum, 2); }, 0)) * 1000) / 1000;
+  /* 最大族群 */
+  var cand = [['閩南', d.minnan], ['客家', d.hakka], ['外省', d.mainlander], ['原住民', d.indigenous]]
+    .filter(function (c) { return isNum(c[1]); });
+  cand.sort(function (a, b) { return b[1] - a[1]; });
+  d.top = cand[0][0]; d.topVal = cand[0][1];
+  if (d.hakka !== null) d.hakkaShare = Math.round(d.hakka / fourSum * 1000) / 10;
+  return d;
+});
+
+var BY_NAME = {};
+DATA.forEach(function (d) { BY_NAME[d.name] = d; });
+
+function valOf(d, key) {
+  if (key === 'diversity') return d.diversity;
+  if (key === 'other') return d.other;
+  return d[key];
+}
+function groupMax(key) {
+  var m = 0;
+  DATA.forEach(function (d) { var v = valOf(d, key); if (isNum(v) && v > m) m = v; });
+  return m;
+}
+/* 顯示用色階定義：0 起跳的整齊上界 */
+function domainOf(key) {
+  if (key === 'diversity') return [0, 0.75];
+  if (key === 'other') return [0, Math.ceil(groupMax('other') / 5) * 5];
+  return [0, Math.max(5, Math.ceil(groupMax(key) / 10) * 10)];
+}
+function valueLabel(key, v) {
+  if (!isNum(v)) return '未完整';
+  if (key === 'diversity') return v.toFixed(3);
+  return v.toFixed(1) + '%';
+}
+function unitLabel(key) { return key === 'diversity' ? '指數' : '%'; }
+
+/* ── 3. 小工具 ───────────────────────────────────────────────────────── */
+
+function el(tag, attrs, kids) {
+  var n = document.createElement(tag);
+  if (attrs) Object.keys(attrs).forEach(function (k) {
+    if (k === 'class') n.className = attrs[k];
+    else if (k === 'text') n.textContent = attrs[k];
+    else if (k === 'html') n.innerHTML = attrs[k];
+    else if (k.slice(0, 2) === 'on') n.addEventListener(k.slice(2), attrs[k]);
+    else if (attrs[k] !== null && attrs[k] !== undefined) n.setAttribute(k, attrs[k]);
+  });
+  (kids || []).forEach(function (c) { if (c) n.appendChild(c); });
+  return n;
+}
+function svgEl(tag, attrs) {
+  var n = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  Object.keys(attrs || {}).forEach(function (k) {
+    if (attrs[k] !== null && attrs[k] !== undefined) n.setAttribute(k, attrs[k]);
+  });
+  return n;
+}
+function hex2rgb(h) { h = h.replace('#', ''); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; }
+function mixHex(a, b, t) {
+  var A = hex2rgb(a), B = hex2rgb(b);
+  return '#' + A.map(function (v, i) {
+    return ('0' + Math.round(v + (B[i] - v) * Math.max(0, Math.min(1, t))).toString(16)).slice(-2);
+  }).join('');
+}
+function rampColor(ramp, t) { return mixHex(ramp[0], ramp[1], t); }
+
+var nf = new Intl.NumberFormat('zh-Hant-TW');
+
+/* ── 4. 狀態 ─────────────────────────────────────────────────────────── */
+
+var state = {
+  view: 'map',
+  group: 'hakka',
+  region: 'all',
+  selected: '新竹縣',
+  compareA: '新竹縣',
+  compareB: '苗栗縣',
+  showValues: true,
+  scaleMode: 'auto',     /* auto | fixed100 */
+  tableSort: { key: 'knownSum', dir: -1 },
+  tableCompleteOnly: false,
+  tableQuery: ''
+};
+
+/* ── 5. 地圖 ─────────────────────────────────────────────────────────── */
+
+/* 過小／被包圍的縣市：改以「標籤方塊＋引線」標註。
+   座標由 solve_labels.py 求解（不與任何標籤互疊、不覆蓋其他縣市填色）。 */
+var LABEL_CFG = {
+  '基隆市': { x: 1109, y: 58,  foot: [1102, 72] },
+  '臺北市': { x: 984,  y: 76,  foot: [1024, 90] },
+  '新北市': { x: 1090, y: 145, foot: [1074, 143] },
+  '新竹市': { x: 835,  y: 178, foot: [853, 183] },
+  '嘉義市': { x: 709,  y: 635, foot: [708, 637] },
+  '澎湖縣': { x: 422,  y: 538, foot: [443, 552] }
+};
+
+var MAPD = null;
+
+/* 圖內數值只在圖面夠大時顯示：窄螢幕上字會被縮成 <8px */
+function valuesFit() {
+  var svg = document.getElementById('map');
+  if (!svg) return true;
+  var w = svg.getBoundingClientRect().width || 1220;
+  return (w / 1220) * 12.5 >= 9;
+}
+
+function buildMap() {
+  var svg = document.getElementById('map');
+  svg.setAttribute('viewBox', '0 0 ' + MAPD.viewBox[2] + ' ' + MAPD.viewBox[3]);
+
+  var defs = svgEl('defs');
+
+  /* 海面漸層 */
+  var sg = svgEl('linearGradient', { id:'seaGrad', x1:'0', y1:'0', x2:'0.35', y2:'1' });
+  sg.appendChild(svgEl('stop', { offset:'0%', 'stop-color':'var(--map-sea-1)' }));
+  sg.appendChild(svgEl('stop', { offset:'100%', 'stop-color':'var(--map-sea-2)' }));
+  defs.appendChild(sg);
+
+  /* 島嶼柔和落影（群組 alpha → 只有外輪廓投影，縣市之間不會互相投影） */
+  var fl = svgEl('filter', { id:'islandShadow', x:'-12%', y:'-12%', width:'124%', height:'124%' });
+  fl.appendChild(svgEl('feDropShadow', { dx:'0', dy:'2.5', stdDeviation:'3.2',
+    'flood-color':'#0d1520', 'flood-opacity':'.22' }));
+  defs.appendChild(fl);
+
+  /* 缺列斜線填色 */
+  var p = svgEl('pattern', { id:'hatch', width:8, height:8, patternUnits:'userSpaceOnUse',
+                             patternTransform:'rotate(45)' });
+  p.appendChild(svgEl('rect', { width:8, height:8, fill:'var(--map-empty)' }));
+  p.appendChild(svgEl('line', { x1:0, y1:0, x2:0, y2:8, stroke:'var(--line-2)', 'stroke-width':2.4 }));
+  defs.appendChild(p);
+  GROUPS.forEach(function (g) {
+    var lg = svgEl('linearGradient', { id:'ramp-'+g.key, x1:'0', y1:'0', x2:'1', y2:'0' });
+    lg.appendChild(svgEl('stop', { offset:'0%',  'stop-color':g.ramp[0] }));
+    lg.appendChild(svgEl('stop', { offset:'100%','stop-color':g.ramp[1] }));
+    defs.appendChild(lg);
+  });
+  svg.appendChild(defs);
+
+  var gGeo = svgEl('g', { id:'g-geo' });
+  var gLab = svgEl('g', { id:'g-lab' });
+  var gLabGrat = svgEl('g', { id:'g-grat-labels' });
+
+  /* 主圖框：海面 → 經緯網格 → 陸地 → 框線 */
+  var mf = MAPD.main.frame;
+  gGeo.appendChild(svgEl('rect', { x:mf.x, y:mf.y, width:mf.w, height:mf.h,
+                                   rx:14, class:'map-bg' }));
+  var gGrat = svgEl('g', { id:'g-grat', 'aria-hidden':'true' });
+  (MAPD.main.grat || []).forEach(function (l) {
+    gGrat.appendChild(svgEl('line', { x1:l.x1, y1:l.y1, x2:l.x2, y2:l.y2, class:'grat-line' }));
+  });
+  gGeo.appendChild(gGrat);
+  var mainG = svgEl('g', { id:'g-main', class:'island-shadow' });
+  Object.keys(MAPD.main.paths).forEach(function (nm) { mainG.appendChild(countyPath(nm, MAPD.main.paths[nm])); });
+  gGeo.appendChild(mainG);
+  (MAPD.main.gratLabels || []).forEach(function (l) {
+    var t = svgEl('text', { x:l.x, y:l.y, class:'grat-label', 'text-anchor':
+      (l.x < mf.x + mf.w / 2 ? 'start' : 'end') });
+    t.textContent = l.t;
+    gLabGrat.appendChild(t);
+  });
+  gGeo.appendChild(svgEl('rect', { x:mf.x, y:mf.y, width:mf.w, height:mf.h,
+                                   rx:14, class:'frame-box' }));
+
+  /* 離島放大框（金門、連江） */
+  MAPD.insets.forEach(function (ins) {
+    var f = ins.frame;
+    gGeo.appendChild(svgEl('rect', { x:f.x, y:f.y, width:f.w, height:f.h,
+                                     rx:12, class:'map-bg' }));
+    var t = svgEl('text', { x:f.x, y:f.title_y, class:'frame-title', 'text-anchor':'start' });
+    t.textContent = ins.name + '（放大 ' + ins.zoom + '×）';
+    gGeo.appendChild(t);
+    var g = svgEl('g', { class:'island-shadow' });
+    Object.keys(ins.paths).forEach(function (nm) { g.appendChild(countyPath(nm, ins.paths[nm])); });
+    gGeo.appendChild(g);
+    gGeo.appendChild(svgEl('rect', { x:f.x, y:f.y, width:f.w, height:f.h,
+                                     rx:12, class:'frame-box' }));
+    scaleBar(ins, f.x + 6, f.y + f.h + 22, 130, gGeo);
+  });
+
+  /* 主圖框比例尺（貼在框內左下） */
+  scaleBar(MAPD.main, mf.x + 26, mf.y + mf.h - 26, 200, gGeo);
+
+  /* 左欄下方空白：指北針與圖框說明 */
+  var lx = 50;
+  var na = svgEl('g', { class:'north' });
+  na.appendChild(svgEl('path', { d:'M' + (lx + 12) + ',664L' + (lx + 19) + ',686L' + (lx + 12) + ',681L'
+                                   + (lx + 5) + ',686Z',
+                                 fill:'var(--ink-3)' }));
+  var nt = svgEl('text', { x:lx + 12, y:698, 'text-anchor':'middle', fill:'var(--ink-3)',
+                            'font-size':11 });
+  nt.textContent = '北';
+  na.appendChild(nt);
+  gGeo.appendChild(na);
+  ['主圖：臺灣本島＋澎湖',
+   '（真實相對位置、同一比例尺）',
+   '金門、連江為獨立圖框，',
+   '圖框內比例尺各自標示。',
+   '圖資：內政部縣市界圖',
+   '（g0v twgeojson，已簡化）'
+  ].forEach(function (line, i) {
+    var t2 = svgEl('text', { x:lx + 44, y:668 + i * 19, class:'inset-note' });
+    t2.textContent = line;
+    gGeo.appendChild(t2);
+  });
+
+  svg.appendChild(gGeo);
+  svg.appendChild(gLab);
+  svg.appendChild(gLabGrat);
+  renderMap();
+}
+
+function countyPath(nm, geo) {
+  var d = BY_NAME[nm];
+  var path = svgEl('path', {
+    d: geo.d, class:'county', 'data-name': nm, tabindex:'0', role:'button'
+  });
+  path.setAttribute('aria-label', nm + '：' + (d ? fullLabel(state.group) + ' ' + valueLabel(state.group, valOf(d, state.group)) : ''));
+  path.addEventListener('mouseenter', function (e) { showTip(nm, e); });
+  path.addEventListener('mousemove', function (e) { moveTip(e); });
+  path.addEventListener('mouseleave', hideTip);
+  path.addEventListener('focus', function () { showTip(nm, null); });
+  path.addEventListener('blur', hideTip);
+  path.addEventListener('click', function () { select(nm, true); });
+  path.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(nm, true); }
+  });
+  return path;
+}
+
+/* 比例尺：以 km_per_px 反推整數公里長度 */
+function scaleBar(frame, x, y, maxW, parent) {
+  var kmPerPx = frame.meta.km_per_px;
+  var nice = [1, 2, 5, 10, 20, 25, 50, 100, 200];
+  var km = nice.filter(function (k) { return k / kmPerPx <= maxW; }).pop() || 1;
+  var w = km / kmPerPx;
+  var g = svgEl('g', { class:'scalebar' });
+  g.appendChild(svgEl('line', { x1:x, y1:y, x2:x + w, y2:y }));
+  g.appendChild(svgEl('line', { x1:x, y1:y - 4, x2:x, y2:y + 4 }));
+  g.appendChild(svgEl('line', { x1:x + w, y1:y - 4, x2:x + w, y2:y + 4 }));
+  var t = svgEl('text', { x:x + w / 2, y:y - 8, 'text-anchor':'middle' });
+  t.textContent = km + ' km';
+  g.appendChild(t);
+  parent.appendChild(g);
+  return g;
+}
+
+function colorFor(d) {
+  var v = valOf(d, state.group);
+  if (!isNum(v)) return null;
+  var dom = state.scaleMode === 'fixed100' && state.group !== 'diversity'
+    ? [0, 100] : domainOf(state.group);
+  var t = (v - dom[0]) / (dom[1] - dom[0]);
+  return rampColor(rampFor(state.group), t);
+}
+
+function renderMap() {
+  var svg = document.getElementById('map');
+  if (!svg) return;
+  var sel = state.selected;
+  var reg = state.region;
+
+  svg.querySelectorAll('.county').forEach(function (path) {
+    var nm = path.getAttribute('data-name');
+    var d = BY_NAME[nm];
+    var inRegion = (reg === 'all' || (d && d.region === reg));
+    path.classList.toggle('dimmed', !inRegion);
+    path.classList.toggle('sel', nm === sel && inRegion);
+    path.classList.remove('is-empty');
+    var c = d ? colorFor(d) : null;
+    if (c) path.setAttribute('fill', c);
+    else path.classList.add('is-empty');
+    path.setAttribute('aria-label', nm + '｜' + fullLabel(state.group)
+      + ' ' + valueLabel(state.group, d ? valOf(d, state.group) : null)
+      + (d ? '｜樣本 ' + nf.format(d.sample) + ' 人' : ''));
+  });
+
+  renderLabels();
+  renderLegend();
+}
+
+function renderLabels() {
+  var gLab = document.getElementById('g-lab');
+  if (!gLab) return;
+  gLab.textContent = '';
+  var reg = state.region;
+
+  function labelFor(nm, geo, frameScale) {
+    var d = BY_NAME[nm];
+    var inRegion = (reg === 'all' || (d && d.region === reg));
+    var cfg = LABEL_CFG[nm];
+    var v = d ? valOf(d, state.group) : null;
+    var txt = valueLabel(state.group, v);
+    var opacity = inRegion ? 1 : 0.25;
+
+    var g2 = svgEl('g', { opacity: opacity });
+    var ty = cfg ? cfg.y : geo.cy;
+    var tx = cfg ? cfg.x : geo.cx;
+    if (cfg && cfg.foot) {
+      g2.appendChild(svgEl('path', { d:'M' + tx + ',' + (ty + 6) + 'L' + cfg.foot[0] + ',' + cfg.foot[1], class:'c-leader' }));
+      g2.appendChild(svgEl('circle', { cx:cfg.foot[0], cy:cfg.foot[1], r:2.4, class:'c-dot' }));
+    }
+    var t = svgEl('text', { x:tx, y:ty, 'text-anchor':'middle', class:'c-label' });
+    t.textContent = nm;
+    g2.appendChild(t);
+    var showVal = state.showValues && valuesFit() && d && !cfg && geo.w >= 52 && geo.h >= 40;
+    if (showVal) {
+      var vt = svgEl('text', { x:tx, y:ty + 23, 'text-anchor':'middle', class:'c-value' });
+      vt.textContent = txt;
+      g2.appendChild(vt);
+    }
+    gLab.appendChild(g2);
+  }
+
+  Object.keys(MAPD.main.paths).forEach(function (nm) { labelFor(nm, MAPD.main.paths[nm]); });
+  MAPD.insets.forEach(function (ins) {
+    Object.keys(ins.paths).forEach(function (nm) {
+      var f = ins.frame, d = BY_NAME[nm];
+      var on = (reg === 'all' || d.region === reg);
+      var g = svgEl('g', { opacity: on ? 1 : 0.25 });
+      var vt = svgEl('text', { x:f.x + f.w, y:f.title_y, 'text-anchor':'end',
+                               class:'c-value', 'font-size':'15px' });
+      vt.textContent = valueLabel(state.group, valOf(d, state.group));
+      g.appendChild(vt);
+      gLab.appendChild(g);
+    });
+  });
+}
+
+function renderLegend() {
+  var key = state.group;
+  var rm = rampFor(key);
+  var dom = state.scaleMode === 'fixed100' && key !== 'diversity' ? [0, 100] : domainOf(key);
+  var bar = document.getElementById('ramp-bar');
+  if (!bar) return;
+  bar.style.background = 'linear-gradient(90deg,' + rm[0] + ',' + rm[1] + ')';
+  document.getElementById('ramp-lo').textContent = valueLabel(key, dom[0]);
+  document.getElementById('ramp-hi').textContent = valueLabel(key, dom[1]);
+  document.getElementById('legend-title').textContent =
+    fullLabel(key) + '　' + (key === 'diversity' ? '（0–0.75）' : '（%）') + '　2014 · 居住縣市';
+  var note = document.getElementById('legend-note');
+  if (note) {
+    note.textContent = key === 'diversity'
+      ? '斜線＝客家（合併）原表缺列，四族群小計無法計算，故無多樣性指數（澎湖、金門、連江）。'
+      : (state.scaleMode === 'fixed100' ? '色階固定 0–100%，可直接比較不同族群之間的絕對水準。'
+                                        : '色階依所選族群的資料範圍拉伸；切到「固定 0–100」可比較絕對水準。');
+  }
+}
+
+/* 提示框 */
+function showTip(nm, ev) {
+  var d = BY_NAME[nm];
+  if (!d) return;
+  var tip = document.getElementById('tooltip');
+  var v = valOf(d, state.group);
+  var rows = '';
+  rows += '<div class="t-row"><span>' + fullLabel(state.group)
+        + '</span><em>' + (state.group === 'diversity' ? (isNum(v) ? v.toFixed(3) : '—') : pct(v)) + '</em></div>';
+  rows += '<div class="t-row"><span>最大族群</span><em>' + d.top + ' ' + d.topVal.toFixed(1) + '%</em></div>';
+  rows += '<div class="t-row"><span>樣本</span><em>' + nf.format(d.sample) + ' 人</em></div>';
+  tip.innerHTML = '<b>' + d.name + ' <span class="muted small">' + d.region + '</span></b>' + rows
+    + '<div class="t-note">' + (d.complete ? '原表 8 欄完整' : '原表缺列：大陸客家人') + '</div>';
+  tip.classList.add('on');
+  if (ev) moveTip(ev);
+}
+function moveTip(ev) {
+  var tip = document.getElementById('tooltip');
+  var shell = tip.parentNode.getBoundingClientRect();
+  var x = ev.clientX - shell.left + 16, y = ev.clientY - shell.top + 16;
+  if (x + tip.offsetWidth > shell.width - 8) x = ev.clientX - shell.left - tip.offsetWidth - 14;
+  if (y + tip.offsetHeight > shell.height - 8) y = ev.clientY - shell.top - tip.offsetHeight - 14;
+  tip.style.left = Math.max(6, x) + 'px';
+  tip.style.top = Math.max(6, y) + 'px';
+}
+function hideTip() { document.getElementById('tooltip').classList.remove('on'); }
+
+/* ── 6. 選取 ─────────────────────────────────────────────────────────── */
+
+function select(nm, scroll) {
+  state.selected = nm;
+  if (state.view === 'map') renderMap();
+  renderDetail();
+  if (state.view === 'rank') renderRank();
+  if (scroll && window.innerWidth < 1120) {
+    var p = document.getElementById('detail-panel');
+    if (p) p.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+  syncHash();
+}
+
+/* ── 7. 詳情卡 ───────────────────────────────────────────────────────── */
+
+function renderDetail() {
+  var host = document.getElementById('detail-body');
+  if (!host) return;
+  host.textContent = '';
+  var d = BY_NAME[state.selected];
+  if (!d) return;
+  var v = valOf(d, state.group);
+  var ci = ci95(v, d.sample);
+
+  host.appendChild(el('div', { class:'detail-name' }, [
+    el('h2', { text:d.name }),
+    el('span', { class:'region-tag', text:d.region })
+  ]));
+
+  host.appendChild(el('div', { class:'big-fig' }, [
+    isNum(v)
+      ? el('b', { text:state.group === 'diversity' ? v.toFixed(3) : v.toFixed(1) })
+      : el('b', { class:'na', text:'未完整' }),
+    el('span', { text:state.group === 'diversity'
+      ? '四族群多樣性指數（0–0.75）'
+      : fullLabel(state.group) + '（%）・占該縣市加權調查人口' })
+  ]));
+
+  if (isNum(v) && ci) {
+    host.appendChild(el('p', { class:'ci-line', text:
+      '近似 95% 區間：' + Math.max(0, v - ci).toFixed(1) + '% ～ ' + Math.min(100, v + ci).toFixed(1)
+      + '%（±' + ci.toFixed(1) + ' 個百分點，常態近似）' }));
+  } else if (isNum(v)) {
+    host.appendChild(el('p', { class:'ci-line', text:'此比例僅單一欄位、無合併誤差；樣本小的縣市請看排名圖的區間。' }));
+  } else {
+    host.appendChild(el('p', { class:'ci-line', text:'客家（合併）＝臺灣客家人＋大陸客家人；後者原表為「—」，保留缺列不當作 0%，因此無法計算。' }));
+  }
+
+  host.appendChild(el('div', { class:'kv' }, [
+    el('div', {}, [el('b', { text:'2014' }), el('span', { text:'調查年' })]),
+    el('div', {}, [el('b', { text:nf.format(d.sample) }), el('span', { text:'樣本（人）' })]),
+    el('div', {}, [el('b', { text:d.top + ' ' + d.topVal.toFixed(1) + '%' }), el('span', { text:'最大族群' })]),
+    el('div', {}, [el('b', { text:isNum(d.diversity) ? d.diversity.toFixed(3) : '—' }), el('span', { text:'多樣性指數' })])
+  ]));
+
+  /* 四族群＋其他 100% 堆疊 */
+  var segs = [
+    { k:'minnan', nm:'閩南／福老', c:'var(--g-minnan)', v:d.minnan },
+    { k:'hakka', nm:'客家（合併）', c:'var(--g-hakka)', v:d.hakka },
+    { k:'mainlander', nm:'外省背景', c:'var(--g-mainlander)', v:d.mainlander },
+    { k:'indigenous', nm:'原住民認同', c:'var(--g-indigenous)', v:d.indigenous },
+    { k:'other', nm:'其他／未回答', c:'var(--g-taiwanese)', v:d.other }
+  ];
+  var total = sum(segs.map(function (s) { return s.v; })) || 1;
+  var bar = el('div', { class:'stack' });
+  segs.forEach(function (s) {
+    bar.appendChild(el('i', { style:'width:' + (s.v / total * 100).toFixed(2) + '%;background:' + s.c,
+                              title:s.nm + ' ' + fmt1(s.v) + '%' }));
+  });
+  host.appendChild(el('h3', { class:'field-label', style:'margin-top:20px', text:'完整認同分布（保留其他認同與未回答）' }));
+  host.appendChild(bar);
+
+  var lg = el('div', { class:'stack-legend' });
+  segs.forEach(function (s) {
+    lg.appendChild(el('div', { class:'srow' + (s.k === 'other' ? ' muted' : '') }, [
+      el('div', { class:'nm' }, [el('i', { style:'background:' + s.c }), el('span', { text:s.nm })]),
+      el('span', { class:'vv', text:fmt1(s.v) + '%' }),
+      el('span', { class:'bb', text:(s.v / total * 100).toFixed(1) + '%' })
+    ]));
+  });
+  host.appendChild(lg);
+
+  /* 核對 */
+  var chips = el('div', { class:'chips' });
+  chips.appendChild(el('span', { class:'chip' + (d.complete ? ' ok' : ' warn'),
+    text:d.complete ? '✓ 原表 8 欄完整' : '⚠ 原表缺列：大陸客家人為「—」' }));
+  chips.appendChild(el('span', { class:'chip', text:'四族群小計 ' + fmt1(d.fourSum) + '%' }));
+  chips.appendChild(el('span', { class:'chip', text:'列值總和 ' + fmt1(d.knownSum) + '%' }));
+  chips.appendChild(el('span', { class:'chip',
+    text:Math.abs(d.delta) <= 0.4 ? '列值總和誤差 ' + d.delta.toFixed(1) + ' pp（四捨五入容許內）'
+                                  : '列值總和誤差 ' + d.delta.toFixed(1) + ' pp' }));
+  host.appendChild(chips);
+
+  if (PRIOR[d.name]) {
+    var p = PRIOR[d.name];
+    var cur = [d.minnan, d.hakka, d.mainlander, d.indigenous];
+    var same = p.every(function (x, i) { return isNum(cur[i]) && Math.abs(x - cur[i]) < 0.05; });
+    host.appendChild(el('div', { class:'note', html:
+      '<b>與先前對話值核對：</b>' + (same ? '一致。' : '不同。')
+      + ' 先前（閩南／客家／外省／原住民）＝ ' + p.map(function (x) { return x.toFixed(1); }).join(' / ')
+      + '；本次官方表 ＝ ' + cur.map(function (x) { return isNum(x) ? x.toFixed(1) : '—'; }).join(' / ')
+      + '。<br><span class="muted">先前值年份、樣本與分類未經核實，一律以官方 A-3 為準。</span>' }));
+  } else if (d.region === '離島') {
+    host.appendChild(el('div', { class:'note', html:
+      '<b>先前對話未留下此地的四族群值。</b>本次直接由官方 A-3 補入。' }));
+  }
+
+  host.appendChild(el('div', { class:'btn-row', style:'margin-top:16px' }, [
+    el('button', { class:'btn primary', text:'設為比較地點 A', onclick:function () { state.compareA = d.name; renderCompare(); syncHash(); } }),
+    el('button', { class:'btn', text:'設為比較地點 B', onclick:function () { state.compareB = d.name; renderCompare(); syncHash(); } }),
+    el('button', { class:'btn', text:'在表格中查看', onclick:function () { setView('data'); } })
+  ]));
+}
+
+/* ── 8. 檢視：地圖 ───────────────────────────────────────────────────── */
+
+function renderMapViewControls() {
+  var sg = document.getElementById('group-seg');
+  if (!sg) return;
+  sg.textContent = '';
+  GROUPS.forEach(function (g) {
+    sg.appendChild(el('button', {
+      'aria-pressed': String(state.group === g.key),
+      onclick:function () { state.group = g.key; renderMap(); renderDetail(); renderRank(); syncHash(); }
+    }, [el('i', { class:'swatch', style:'background:' + g.color }), el('span', { text:g.label })]));
+  });
+  sg.appendChild(el('button', {
+    'aria-pressed': String(state.group === 'diversity'),
+    onclick:function () { state.group = 'diversity'; renderMap(); renderDetail(); renderRank(); syncHash(); }
+  }, [el('i', { class:'swatch', style:'background:linear-gradient(135deg,#e8e2f5,#4b2e83)' }), el('span', { text:'多樣性' })]));
+  sg.appendChild(el('button', {
+    'aria-pressed': String(state.group === 'other'),
+    onclick:function () { state.group = 'other'; renderMap(); renderDetail(); renderRank(); syncHash(); }
+  }, [el('i', { class:'swatch', style:'background:var(--g-taiwanese)' }), el('span', { text:'其他／未答' })]));
+
+  var sc = document.getElementById('region-seg');
+  sc.textContent = '';
+  ['all'].concat(REGIONS).forEach(function (r) {
+    sc.appendChild(el('button', {
+      'aria-pressed': String(state.region === r),
+      text: r === 'all' ? '全部' : r,
+      onclick:function () { state.region = r; renderMap(); syncHash(); }
+    }));
+  });
+
+  var sv = document.getElementById('scale-seg');
+  sv.textContent = '';
+  [['auto','依資料範圍'], ['fixed100','固定 0–100']].forEach(function (m) {
+    sv.appendChild(el('button', {
+      'aria-pressed': String(state.scaleMode === m[0]), text:m[1],
+      onclick:function () { state.scaleMode = m[0]; renderMap(); }
+    }));
+  });
+
+  var cb = document.getElementById('cb-values');
+  cb.checked = state.showValues;
+  cb.onchange = function () { state.showValues = cb.checked; renderLabels(); };
+  var hint = document.getElementById('map-hint');
+  if (hint) hint.hidden = state.view !== 'map';
+}
+
+/* ── 9. 檢視：跨縣市比較 ─────────────────────────────────────────────── */
+
+function renderRank() {
+  var host = document.getElementById('rank-list');
+  if (!host) return;
+  host.textContent = '';
+  var key = state.group;
+  var dom = state.scaleMode === 'fixed100' && key !== 'diversity' ? [0, 100] : domainOf(key);
+  var col = colorForGroup(key);
+
+  var list = DATA.filter(function (d) { return isNum(valOf(d, key)); })
+                 .sort(function (a, b) { return valOf(b, key) - valOf(a, key); });
+  var missing = DATA.filter(function (d) { return !isNum(valOf(d, key)); });
+
+  list.forEach(function (d, i) {
+    var v = valOf(d, key);
+    var ci = ci95(v, d.sample);
+    var w = v / dom[1] * 100;
+    var track = el('div', { class:'track' });
+    [0.25, 0.5, 0.75].forEach(function (t) {
+      track.appendChild(el('div', { class:'xtick', style:'left:' + (t * 100).toFixed(1) + '%' }));
+    });
+    track.appendChild(el('div', { class:'bar', style:'width:' + Math.min(100, w).toFixed(2) + '%;background:' + col }));
+    if (ci) {
+      var lo = Math.max(0, v - ci) / dom[1] * 100, hi = Math.min(dom[1], v + ci) / dom[1] * 100;
+      track.appendChild(el('div', { class:'whisk', style:'left:' + lo.toFixed(2) + '%' }));
+      track.appendChild(el('div', { class:'cap', style:'left:' + hi.toFixed(2) + '%' }));
+    }
+    track.appendChild(el('div', { class:'dot',
+      style:'left:' + Math.min(100, w).toFixed(2) + '%;background:' + col }));
+    host.appendChild(el('div', {
+      class:'rrow' + (d.name === state.selected ? ' sel' : ''),
+      onclick:function () { select(d.name, false); }
+    }, [
+      el('div', { class:'rn', text:(i + 1) + '. ' + d.name }),
+      track,
+      el('div', { class:'rv', text:key === 'diversity' ? v.toFixed(3) : v.toFixed(1) }),
+      el('div', { class:'rs', text:ci ? '±' + ci.toFixed(1) : '—' })
+    ]));
+  });
+  missing.forEach(function (d) {
+    host.appendChild(el('div', { class:'rrow' }, [
+      el('div', { class:'rn muted', text:d.name }),
+      el('div', { class:'track' }, [el('span', { class:'small muted', text:'客家合併欄原表缺列，無法排序' })]),
+      el('div', { class:'rv muted', text:'—' }),
+      el('div', { class:'rs', text:'—' })
+    ]));
+  });
+
+  document.getElementById('rank-title').textContent = fullLabel(key) + '｜各縣市排名與近似 95% 區間';
+
+  /* 全部縣市 100% 堆疊 */
+  var sa = document.getElementById('stack-all');
+  if (sa) {
+    sa.textContent = '';
+    var segsDef = [
+      { nm:'閩南', c:'var(--g-minnan)', f:function (d) { return d.minnan; } },
+      { nm:'客家', c:'var(--g-hakka)', f:function (d) { return d.hakka; } },
+      { nm:'外省', c:'var(--g-mainlander)', f:function (d) { return d.mainlander; } },
+      { nm:'原住民', c:'var(--g-indigenous)', f:function (d) { return d.indigenous; } },
+      { nm:'其他／未答', c:'var(--g-taiwanese)', f:function (d) { return d.other; } }
+    ];
+    var order = DATA.slice().sort(function (a, b) { return (b.hakka || -1) - (a.hakka || -1); });
+    order.forEach(function (d) {
+      var t = sum(segsDef.map(function (s) { return s.f(d); })) || 1;
+      var bar = el('div', { class:'sa-bar' });
+      segsDef.forEach(function (s) {
+        var v = s.f(d);
+        if (v == null) return;
+        bar.appendChild(el('i', { style:'width:' + (v / t * 100).toFixed(2) + '%;background:' + s.c,
+                                  title:s.nm + ' ' + v.toFixed(1) + '%' }));
+      });
+      sa.appendChild(el('div', {
+        class:'sa-row' + (d.name === state.selected ? ' sel' : '') + (state.region !== 'all' && d.region !== state.region ? ' dim' : '')
+      }, [
+        el('div', { class:'nm', text:d.name, onclick:function () { select(d.name, false); } }),
+        bar,
+        el('div', { class:'sa-pct', text:isNum(d.hakka) ? d.hakka.toFixed(1) : '—' })
+      ]));
+    });
+  }
+
+  renderScatter();
+  renderDiversity();
+}
+
+function renderScatter() {
+  var host = document.getElementById('scatter');
+  if (!host) return;
+  host.textContent = '';
+  var W = 660, H = 430, P = { l:56, r:22, t:18, b:44 };
+  var svg = svgEl('svg', { viewBox:'0 0 ' + W + ' ' + H, style:'width:100%;height:auto;display:block',
+                           role:'img', 'aria-label':'客家比例與原住民比例散佈圖' });
+
+  var pts = DATA.filter(function (d) { return isNum(d.hakka); });
+  var xMax = 70, yMax = 25;
+  function X(v) { return P.l + v / xMax * (W - P.l - P.r); }
+  function Y(v) { return H - P.b - v / yMax * (H - P.t - P.b); }
+
+  for (var gx = 0; gx <= xMax; gx += 10) {
+    svg.appendChild(svgEl('line', { x1:X(gx), y1:P.t, x2:X(gx), y2:H - P.b, stroke:'var(--line)' }));
+    var t = svgEl('text', { x:X(gx), y:H - P.b + 16, 'text-anchor':'middle', fill:'var(--ink-3)', 'font-size':11 });
+    t.textContent = gx; svg.appendChild(t);
+  }
+  for (var gy = 0; gy <= yMax; gy += 5) {
+    svg.appendChild(svgEl('line', { x1:P.l, y1:Y(gy), x2:W - P.r, y2:Y(gy), stroke:'var(--line)' }));
+    var t2 = svgEl('text', { x:P.l - 8, y:Y(gy) + 4, 'text-anchor':'end', fill:'var(--ink-3)', 'font-size':11 });
+    t2.textContent = gy; svg.appendChild(t2);
+  }
+  var xl = svgEl('text', { x:(W + P.l) / 2, y:H - 8, 'text-anchor':'middle', fill:'var(--ink-2)', 'font-size':12 });
+  xl.textContent = '客家（合併）比例 %'; svg.appendChild(xl);
+  var yl = svgEl('text', { x:14, y:(H - P.b + P.t) / 2, 'text-anchor':'middle', fill:'var(--ink-2)', 'font-size':12,
+                            transform:'rotate(-90 14 ' + ((H - P.b + P.t) / 2) + ')' });
+  yl.textContent = '原住民認同比例 %'; svg.appendChild(yl);
+
+  var LABELED = { '新竹縣':1,'苗栗縣':1,'桃園市':1,'花蓮縣':1,'臺東縣':1,'屏東縣':1,'高雄市':1,'臺北市':1,
+                  '新北市':1,'臺中市':1,'宜蘭縣':1,'基隆市':1,'雲林縣':1,'連江縣':1,'金門縣':1,'澎湖縣':1,
+                  '彰化縣':1,'南投縣':1,'臺南市':1 };
+
+  pts.slice().sort(function (a, b) { return b.sample - a.sample; }).forEach(function (d) {
+    var r = 4 + Math.sqrt(d.sample / 8000) * 15;
+    var on = (state.region === 'all' || d.region === state.region);
+    var g = svgEl('g', { opacity: on ? 1 : 0.22, style:'cursor:pointer' });
+    g.appendChild(svgEl('circle', { cx:X(d.hakka), cy:Y(d.indigenous), r:r,
+      fill:REGION_COLOR[d.region] + (d.complete ? 'cc' : '66'),
+      stroke: d.name === state.selected ? 'var(--ink)' : 'var(--surface)',
+      'stroke-width': d.name === state.selected ? 2.4 : 1.4 }));
+    if (LABELED[d.name]) {
+      var lb = svgEl('text', { x:X(d.hakka) + r + 4, y:Y(d.indigenous) + 4, fill:'var(--ink)',
+                                'font-size':11.5, 'font-weight':560,
+                                'paint-order':'stroke', stroke:'var(--surface)', 'stroke-width':3 });
+      lb.textContent = d.name;
+      g.appendChild(lb);
+    }
+    var ti = svgEl('title');
+    ti.textContent = d.name + '｜客家 ' + d.hakka.toFixed(1) + '%｜原住民 ' + d.indigenous.toFixed(1)
+      + '%｜樣本 ' + nf.format(d.sample) + ' 人';
+    g.appendChild(ti);
+    g.addEventListener('click', function () { select(d.name, false); });
+    svg.appendChild(g);
+  });
+  host.appendChild(svg);
+  var lg = el('div', { class:'legend-inline' });
+  REGIONS.forEach(function (r) {
+    lg.appendChild(el('div', { class:'row' }, [
+      el('i', { class:'swatch', style:'background:' + REGION_COLOR[r] }),
+      el('span', { text:r })
+    ]));
+  });
+  lg.appendChild(el('div', { class:'row' }, [el('span', { class:'muted', text:'圓面積 ≈ 樣本數' })]));
+  host.appendChild(lg);
+}
+
+function renderDiversity() {
+  var host = document.getElementById('diversity-list');
+  if (!host) return;
+  host.textContent = '';
+  var list = DATA.filter(function (d) { return isNum(d.diversity); })
+                 .sort(function (a, b) { return b.diversity - a.diversity; });
+  var max = list[0].diversity;
+  list.forEach(function (d, i) {
+    host.appendChild(el('div', {
+      class:'rrow' + (d.name === state.selected ? ' sel' : ''),
+      onclick:function () { select(d.name, false); }
+    }, [
+      el('div', { class:'rn', text:(i + 1) + '. ' + d.name }),
+      el('div', { class:'track' }, [
+        el('div', { class:'bar', style:'width:' + (d.diversity / 0.75 * 100).toFixed(1) + '%;background:#4b2e83' }),
+        el('div', { class:'dot', style:'left:' + (d.diversity / 0.75 * 100).toFixed(1) + '%;background:#4b2e83' })
+      ]),
+      el('div', { class:'rv', text:d.diversity.toFixed(3) }),
+      el('div', { class:'rs', text:d.top + ' 為主' })
+    ]));
+  });
+  var miss = DATA.filter(function (d) { return !isNum(d.diversity); });
+  miss.forEach(function (d) {
+    host.appendChild(el('div', { class:'rrow' }, [
+      el('div', { class:'rn muted', text:d.name }),
+      el('div', { class:'track' }, [el('span', { class:'small muted',
+        text:'客家（合併）原表缺列 → 四族群小計不完整，無法計算' })]),
+      el('div', { class:'rv muted', text:'—' }),
+      el('div', { class:'rs', text:'樣本 ' + d.sample })
+    ]));
+  });
+  var noteEl = document.getElementById('diversity-note');
+  if (noteEl) noteEl.textContent = '可計算 ' + list.length + ' 地；'
+    + miss.length + ' 地（' + miss.map(function (d) { return d.name; }).join('、')
+    + '）因客家欄缺列而無法計算，樣本亦僅 101–106 人。';
+}
+
+/* ── 10. 檢視：兩地對照 ─────────────────────────────────────────────── */
+
+function renderCompare() {
+  var hostA = document.getElementById('cmp-a'), hostB = document.getElementById('cmp-b');
+  if (!hostA) return;
+  [['cmp-a', 'compareA', 'A'], ['cmp-b', 'compareB', 'B']].forEach(function (cfg) {
+    var host = document.getElementById(cfg[0]);
+    host.textContent = '';
+    host.appendChild(el('label', { class:'field-label', text:'地點 ' + cfg[2] }));
+    var sel = el('select', {
+      onchange:function () { state[cfg[1]] = sel.value; renderCompare(); syncHash(); }
+    });
+    REGIONS.forEach(function (r) {
+      var og = document.createElement('optgroup');
+      og.label = r;
+      DATA.filter(function (d) { return d.region === r; }).forEach(function (d) {
+        var o = document.createElement('option');
+        o.value = d.name; o.textContent = d.name;
+        if (state[cfg[1]] === d.name) o.selected = true;
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    });
+    host.appendChild(sel);
+  });
+
+  var A = BY_NAME[state.compareA], B = BY_NAME[state.compareB];
+  var host = document.getElementById('diff-rows');
+  host.textContent = '';
+
+  if (A.name === B.name) {
+    host.appendChild(el('div', { class:'note', text:'兩地相同，所有差距皆為 0。請選擇不同地點。' }));
+  }
+
+  GROUPS.forEach(function (g) {
+    var a = A[g.key], b = B[g.key];
+    var ok = isNum(a) && isNum(b);
+    var diff = ok ? r1(a - b) : null;
+    var ciA = ok ? ci95(a, A.sample) : null, ciB = ok ? ci95(b, B.sample) : null;
+    var sd = (ciA && ciB) ? Math.sqrt(Math.pow(ciA / 1.96, 2) + Math.pow(ciB / 1.96, 2)) : null;
+    var lo = (diff != null && sd) ? diff - 1.96 * sd : null;
+    var hi = (diff != null && sd) ? diff + 1.96 * sd : null;
+    var sig = (lo != null && (lo > 0 || hi < 0));
+
+    var LIM = 60;
+    var track = el('div', { class:'diff-track' });
+    track.appendChild(el('div', { class:'mid' }));
+    if (diff != null) {
+      var half = Math.min(50, Math.abs(diff) / LIM * 50);
+      var style = 'width:' + half.toFixed(2) + '%;';
+      style += diff >= 0 ? 'left:50%;background:' + g.color + ';' : 'right:50%;background:' + g.color + ';';
+      track.appendChild(el('div', { class:'dbar', style:style }));
+      if (lo != null) {
+        var loP = 50 + Math.max(-50, lo / LIM * 50), hiP = 50 + Math.min(50, hi / LIM * 50);
+        track.appendChild(el('div', { class:'dci', style:'left:' + loP.toFixed(2) + '%' }));
+        track.appendChild(el('div', { class:'dci right', style:'left:' + hiP.toFixed(2) + '%' }));
+      }
+    }
+    host.appendChild(el('div', { class:'diff-row' }, [
+      el('div', { html:'<span class="swatch" style="display:inline-block;background:' + g.color + '"></span> ' + g.label }),
+      !ok ? el('div', { class:'small muted', text:A.name + ' 或 ' + B.name + ' 的「客家合併」原表缺列，無法比較。' }) : track,
+      el('div', { class:'diff-val', html: ok
+        ? '<b>' + (diff > 0 ? '+' : '') + diff.toFixed(1) + '</b> pp<br>'
+          + '<span class="small ' + (sig ? '' : 'muted') + '">' + (sig ? '差距可能顯著' : '未達顯著') + '</span>'
+        : '<span class="muted">—</span>' })
+    ]));
+  });
+
+  /* 兩地並排堆疊 */
+  var side = document.getElementById('cmp-side');
+  side.textContent = '';
+  [A, B].forEach(function (d) {
+    var segs = [
+      { nm:'閩南／福老', c:'var(--g-minnan)', v:d.minnan },
+      { nm:'客家（合併）', c:'var(--g-hakka)', v:d.hakka },
+      { nm:'外省背景', c:'var(--g-mainlander)', v:d.mainlander },
+      { nm:'原住民認同', c:'var(--g-indigenous)', v:d.indigenous },
+      { nm:'其他／未答', c:'var(--g-taiwanese)', v:d.other }
+    ];
+    var t = sum(segs.map(function (s) { return s.v; })) || 1;
+    var bar = el('div', { class:'stack' });
+    segs.forEach(function (s) {
+      if (s.v == null) return;
+      bar.appendChild(el('i', { style:'width:' + (s.v / t * 100).toFixed(2) + '%;background:' + s.c,
+                                title:s.nm + ' ' + s.v.toFixed(1) + '%' }));
+    });
+    side.appendChild(el('div', { style:'margin-bottom:16px' }, [
+      el('div', { style:'display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px' }, [
+        el('b', { style:'font-size:15px', text:d.name }),
+        el('span', { class:'small muted', text:'樣本 ' + nf.format(d.sample) + ' 人' })
+      ]),
+      bar,
+      el('div', { class:'small muted', style:'margin-top:5px',
+        text:'閩南 ' + fmt1(d.minnan) + '・客家 ' + (isNum(d.hakka) ? fmt1(d.hakka) : '缺列')
+             + '・外省 ' + fmt1(d.mainlander) + '・原住民 ' + fmt1(d.indigenous) })
+    ]));
+  });
+}
+
+/* ── 11. 檢視：資料與查核 ───────────────────────────────────────────── */
+
+var TABLE_COLS = [
+  { key:'name',        label:'縣市',           get:function (d) { return d.ord; }, txt:function (d) { return d.name; } },
+  { key:'region',      label:'區域',           get:function (d) { return REGIONS.indexOf(d.region); }, txt:function (d) { return d.region; } },
+  { key:'sample',      label:'樣本',           get:function (d) { return d.sample; }, txt:function (d) { return d.sample; } },
+  { key:'minnan',      label:'福老人（閩南）', get:function (d) { return d.minnan; } },
+  { key:'hakka',       label:'客家（合併）†',  get:function (d) { return d.hakka; } },
+  { key:'mainlander',  label:'大陸各省市人',   get:function (d) { return d.mainlander; } },
+  { key:'indigenous',  label:'原住民',         get:function (d) { return d.indigenous; } },
+  { key:'hakkaSingle', label:'臺灣客家人',     get:function (d) { return d.raw[0]; } },
+  { key:'hakkaMain',   label:'大陸客家人',     get:function (d) { return d.raw[1]; } },
+  { key:'taiwanese',   label:'臺灣人',         get:function (d) { return d.raw[5]; } },
+  { key:'otherOnly',   label:'其他族群',       get:function (d) { return d.raw[6]; } },
+  { key:'unknown',     label:'不知道／未答',   get:function (d) { return d.raw[7]; } },
+  { key:'knownSum',    label:'列值總和',       get:function (d) { return d.knownSum; } },
+  { key:'diversity',   label:'多樣性',         get:function (d) { return d.diversity; } },
+  { key:'top',         label:'最大族群',       get:function (d) { return ['閩南','客家','外省','原住民'].indexOf(d.top); }, txt:function (d) { return d.top; } },
+  { key:'status',      label:'查核狀態',       get:function (d) { return d.complete ? 1 : 0; },
+                       txt:function (d) { return d.complete ? (Math.abs(d.delta) <= 0.05 ? '完整・合計一致' : '完整・四捨五入') : '原表缺列'; } }
+];
+
+function renderTable() {
+  var host = document.getElementById('data-table');
+  if (!host) return;
+  host.textContent = '';
+  var cols = TABLE_COLS;
+  var sort = state.tableSort;
+  var rows = DATA.filter(function (d) {
+    if (state.tableCompleteOnly && !d.complete) return false;
+    if (state.tableQuery && d.name.indexOf(state.tableQuery) < 0 && d.region.indexOf(state.tableQuery) < 0) return false;
+    return true;
+  }).sort(function (a, b) {
+    var av = cols.filter(function (c) { return c.key === sort.key; })[0].get(a);
+    var bv = cols.filter(function (c) { return c.key === sort.key; })[0].get(b);
+    if (typeof av === 'string') return av.localeCompare(bv, 'zh-Hant') * sort.dir;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    return (av - bv) * sort.dir;
+  });
+
+  var thead = el('thead');
+  var tr = el('tr');
+  cols.forEach(function (c) {
+    tr.appendChild(el('th', {
+      class:'sortable',
+      onclick:function () {
+        if (state.tableSort.key === c.key) state.tableSort.dir *= -1;
+        else state.tableSort = { key:c.key, dir: c.key === 'name' || c.key === 'region' || c.key === 'top' || c.key === 'status' ? 1 : -1 };
+        renderTable();
+      },
+      text: c.label + (sort.key === c.key ? (sort.dir > 0 ? ' ↑' : ' ↓') : '')
+    }));
+  });
+  thead.appendChild(tr);
+  var tbody = el('tbody');
+  rows.forEach(function (d) {
+    var r = el('tr', { class: d.name === state.selected ? 'sel' : '', style:'cursor:pointer',
+                       onclick:function () { select(d.name, false); } });
+    cols.forEach(function (c) {
+      var v = c.get(d);
+      var txt = c.txt ? c.txt(d) : (v == null ? '—' : (c.key === 'diversity' ? v.toFixed(3) : (c.key === 'sample' ? nf.format(v) : v.toFixed(1))));
+      r.appendChild(el('td', { class: (v == null ? 'null' : ''), text:txt }));
+    });
+    tbody.appendChild(r);
+  });
+  var table = el('table', {}, [thead, tbody]);
+  host.appendChild(table);
+
+  document.getElementById('table-count').textContent = rows.length + ' / 22 縣市';
+
+  /* 先前資料核對 */
+  var ph = document.getElementById('prior-table');
+  if (!ph) return;
+  ph.textContent = '';
+  var hd = el('thead');
+  hd.appendChild(el('tr', {}, ['地點', '先前對話值 %', '本次官方統一值 %', '處理']
+    .map(function (x) { return el('th', { text:x }); })));
+  var bd = el('tbody');
+  var diffCount = 0;
+  DATA.forEach(function (d) {
+    var p = PRIOR[d.name];
+    var cur = [d.minnan, d.hakka, d.mainlander, d.indigenous];
+    var same = p ? p.every(function (x, i) { return isNum(cur[i]) && Math.abs(x - cur[i]) < 0.05; }) : null;
+    if (p && !same) diffCount++;
+    bd.appendChild(el('tr', {}, [
+      el('td', { text:d.name }),
+      el('td', { class: p ? '' : 'null', text: p ? p.map(function (x) { return x.toFixed(1); }).join(' / ') : '未找回' }),
+      el('td', { text: cur.map(function (x) { return isNum(x) ? x.toFixed(1) : '—'; }).join(' / ') }),
+      el('td', { text: p ? (same ? '核對一致' : '已改用官方值') : '本次由官方表補入' })
+    ]));
+  });
+  ph.appendChild(hd); ph.appendChild(bd);
+  var st = document.getElementById('prior-summary');
+  if (st) st.textContent = '已找回 ' + Object.keys(PRIOR).length + ' 縣市的先前四族群比例，其中 ' + diffCount
+    + ' 地與本次同口徑原表不同。';
+}
+
+/* ── 12. 匯出 ───────────────────────────────────────────────────────── */
+
+function download(name, text, mime) {
+  var blob = new Blob(['\ufeff' + text], { type: mime + ';charset=utf-8' });
+  var a = el('a', { href: URL.createObjectURL(blob), download: name });
+  document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+}
+function exportCSV() {
+  var head = ['縣市', '區域', '樣本', '閩南／福老%', '客家合併%', '外省背景%', '原住民認同%',
+              '臺灣客家人%', '大陸客家人%', '臺灣人%', '其他族群%', '不知道未回答%',
+              '四族群小計%', '其他未回答%', '列值總和%', '多樣性指數', '最大族群', '查核狀態'];
+  var lines = [head.join(',')];
+  DATA.forEach(function (d) {
+    var v = function (x) { return isNum(x) ? x.toFixed(1) : ''; };
+    lines.push([d.name, d.region, d.sample, v(d.minnan), v(d.hakka), v(d.mainlander), v(d.indigenous),
+      v(d.raw[0]), v(d.raw[1]), v(d.raw[5]), v(d.raw[6]), v(d.raw[7]), v(d.fourSum), v(d.other),
+      v(d.knownSum), isNum(d.diversity) ? d.diversity.toFixed(3) : '', d.top,
+      d.complete ? (Math.abs(d.delta) <= 0.05 ? '完整・合計一致' : '完整・四捨五入') : '原表缺列'
+    ].join(','));
+  });
+  download('台灣族群分布_22縣市_2014.csv', lines.join('\r\n'), 'text/csv');
+}
+function exportJSON() {
+  var out = {
+    source: SRC, generated: new Date().toISOString(),
+    note: '客家＝臺灣客家人＋大陸客家人；原住民為自我認同；數值為原表列值，未重新正規化。',
+    counties: DATA.map(function (d) {
+      return { name:d.name, region:d.region, sample:d.sample,
+        raw_columns:{ '臺灣客家人':d.raw[0], '大陸客家人':d.raw[1], '福老人(閩南)':d.raw[2],
+          '大陸各省市人':d.raw[3], '原住民(自我認同)':d.raw[4], '臺灣人':d.raw[5],
+          '其他族群':d.raw[6], '不知道/未回答':d.raw[7] },
+        merged:{ minnan:d.minnan, hakka:d.hakka, mainlander:d.mainlander, indigenous:d.indigenous, other:d.other },
+        four_group_subtotal:d.fourSum, known_sum:d.knownSum, delta_from_100:d.delta,
+        diversity_simpson:d.diversity, largest_group:d.top, complete:d.complete };
+    })
+  };
+  download('台灣族群分布_22縣市_2014.json', JSON.stringify(out, null, 2), 'application/json');
+}
+
+/* ── 13. 檢視切換與深連結 ───────────────────────────────────────────── */
+
+function setView(v) {
+  state.view = v;
+  ['map', 'rank', 'compare', 'data'].forEach(function (k) {
+    var sec = document.getElementById('view-' + k);
+    if (sec) sec.hidden = (k !== v);
+  });
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.setAttribute('aria-selected', String(t.dataset.view === v));
+  });
+  if (v === 'map') { renderMapViewControls(); renderMap(); renderDetail(); }
+  if (v === 'rank') renderRank();
+  if (v === 'compare') renderCompare();
+  if (v === 'data') renderTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  syncHash();
+}
+
+function syncHash() {
+  var p = [];
+  if (state.view !== 'map') p.push('v=' + state.view);
+  if (state.group !== 'hakka') p.push('g=' + state.group);
+  if (state.region !== 'all') p.push('r=' + state.region);
+  if (state.selected !== '新竹縣') p.push('c=' + state.selected);
+  if (state.compareA !== '新竹縣') p.push('a=' + state.compareA);
+  if (state.compareB !== '苗栗縣') p.push('b=' + state.compareB);
+  var h = p.length ? '#' + p.join('&') : '#';
+  try { history.replaceState(null, '', h); } catch (e) { location.hash = h; }
+}
+function readHash() {
+  var q = {};
+  (location.hash || '').replace(/^#/, '').split('&').forEach(function (kv) {
+    var i = kv.indexOf('='); if (i > 0) q[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1));
+  });
+  if (q.v) state.view = q.v;
+  if (q.g && (GROUPS_BY_KEY[q.g] || q.g === 'diversity' || q.g === 'other')) state.group = q.g;
+  if (q.r && (q.r === 'all' || REGIONS.indexOf(q.r) >= 0)) state.region = q.r;
+  if (q.c && BY_NAME[q.c]) state.selected = q.c;
+  if (q.a && BY_NAME[q.a]) state.compareA = q.a;
+  if (q.b && BY_NAME[q.b]) state.compareB = q.b;
+}
+
+/* ── 14. 初始化 ─────────────────────────────────────────────────────── */
+
+function init() {
+  MAPD = window.MAPDATA;
+  if (!MAPD) { console.error('缺少地圖資料'); return; }
+
+  var saved = null;
+  try { saved = localStorage.getItem('atlas-theme'); } catch (e) {}
+  if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+
+  readHash();
+  buildMap();
+  renderMapViewControls();
+
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('click', function () { setView(t.dataset.view); });
+  });
+  var tb = document.getElementById('theme-btn');
+  tb.addEventListener('click', function () {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (dark) document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', 'dark');
+    try { localStorage.setItem('atlas-theme', dark ? 'light' : 'dark'); } catch (e) {}
+    renderMap(); renderRank();
+  });
+  document.getElementById('exp-csv').addEventListener('click', exportCSV);
+  document.getElementById('exp-json').addEventListener('click', exportJSON);
+  document.getElementById('cb-complete').addEventListener('change', function (e) {
+    state.tableCompleteOnly = e.target.checked; renderTable();
+  });
+  document.getElementById('table-search').addEventListener('input', function (e) {
+    state.tableQuery = e.target.value.trim(); renderTable();
+  });
+  document.getElementById('swap-btn').addEventListener('click', function () {
+    var t = state.compareA; state.compareA = state.compareB; state.compareB = t;
+    renderCompare(); syncHash();
+  });
+
+  /* 統計數字 */
+  var complete = DATA.filter(function (d) { return d.complete; }).length;
+  document.getElementById('st-counties').textContent = DATA.length;
+  document.getElementById('st-complete').textContent = complete;
+  document.getElementById('st-missing').textContent = DATA.length - complete;
+  document.getElementById('st-sample').textContent = nf.format(SRC.n);
+  document.getElementById('st-total-sample').textContent = nf.format(sum(DATA.map(function (d) { return d.sample; })));
+  document.getElementById('st-diff').textContent = (function () {
+    var c = 0;
+    DATA.forEach(function (d) {
+      var p = PRIOR[d.name]; if (!p) return;
+      var cur = [d.minnan, d.hakka, d.mainlander, d.indigenous];
+      if (!p.every(function (x, i) { return isNum(cur[i]) && Math.abs(x - cur[i]) < 0.05; })) c++;
+    });
+    return c;
+  })();
+
+  setView(state.view);
+  if (state.view === 'data') renderTable();
+  renderCompare();
+  renderRank();
+  renderDetail();
+  window.addEventListener('hashchange', function () {
+    readHash(); setView(state.view);
+  });
+  var rt = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(rt);
+    rt = setTimeout(function () { if (state.view === 'map') renderLabels(); }, 150);
+  });
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+
+})();
+</script>
+<script>
+(function () {
+  var b = document.getElementById('goto-method');
+  if (b) b.addEventListener('click', function () {
+    var t = document.querySelector('.tab[data-view="data"]');
+    if (t) t.click();
+  });
+  var c = document.getElementById('st-complete'), m = document.getElementById('st-missing');
+  if (c) document.getElementById('foot-complete').textContent = c.textContent;
+  if (m) document.getElementById('foot-missing').textContent = m.textContent;
+})();
+</script>
+</body>
+</html>
