@@ -2,7 +2,15 @@
 
 ## ✅ 已上線
 
-**<https://sweetmelody0302.github.io/taiwan-ethnic-atlas/>**
+**族群分布圖鑑：<https://sweetmelody0302.github.io/taiwan-ethnic-atlas/>**
+**人口結構圖鑑：<https://sweetmelody0302.github.io/taiwan-ethnic-atlas/population/>**
+
+| 路徑 | 內容 |
+|---|---|
+| `/` | 台灣族群分布圖鑑（2014 客委會調查，閩南／客家／外省／原住民） |
+| `/population/` | 台灣人口結構圖鑑（內政部戶籍統計：人口數、性別、年齡、族群） |
+
+兩個頁面上方都有切換按鈕（`族` / `人`）。
 
 - 平台：GitHub Pages（repo：`sweetmelody0302/taiwan-ethnic-atlas`，Public）
 - 來源：`main` 分支 / 根目錄
