@@ -7,7 +7,8 @@
 - 平台：GitHub Pages（repo：`sweetmelody0302/taiwan-ethnic-atlas`，Public）
 - 來源：`main` 分支 / 根目錄
 - HTTPS：已強制啟用
-- 線上驗證：**74 項斷言全部通過**（`node verify.js https://sweetmelody0302.github.io/taiwan-ethnic-atlas/`）
+- 線上驗證：**79 項斷言全部通過**（`node verify.js https://sweetmelody0302.github.io/taiwan-ethnic-atlas/`）
+- 互動：點選縣市會**放大 12% 並往外浮起**（含地面投影），再點別的就切換
 
 這是一份**純靜態網站**：只有 `index.html` 一個檔案（176 KB，零外部相依、離線可用）。
 不需要 build、不需要 Node、不需要資料庫。
