@@ -289,6 +289,10 @@ button { font: inherit; color: inherit; }
 }
 .seg button:hover { color: var(--ink); }
 .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--sh-1); }
+/* 不適用的選項（例如多樣性指數沒有百分比色階）要停用，不要留一個點了沒反應的按鈕 */
+.seg button[disabled] { opacity: .35; cursor: not-allowed; }
+.seg button[disabled]:hover { color: var(--ink-2); }
+.scale-note { font-size: 11.5px; color: var(--ink-3); }
 .swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
 
 select, input[type="search"] {
@@ -621,6 +625,7 @@ footer a { color: var(--ink-2); }
           <div class="toolbar">
             <span class="toolbar-label">色階</span>
             <div class="seg" id="scale-seg" role="group" aria-label="色階範圍"></div>
+            <span class="scale-note" id="scale-note"></span>
             <label class="chk"><input type="checkbox" id="cb-values" checked> 顯示數值</label>
           </div>
 
@@ -1562,32 +1567,58 @@ function renderDetail() {
 
 /* ── 8. 檢視：地圖 ───────────────────────────────────────────────────── */
 
+/* 只更新 aria-pressed／disabled，不重建 DOM。
+   重建會把剛被點擊的按鈕換掉 → 焦點消失，鍵盤使用者會卡住。 */
+function syncSegState() {
+  function mark(id, active) {
+    document.querySelectorAll('#' + id + ' button').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === active));
+    });
+  }
+  mark('group-seg', state.group);
+  mark('region-seg', state.region);
+  mark('scale-seg', state.scaleMode);
+
+  /* 多樣性是指數不是百分比，「依資料範圍／固定 0–100」對它沒有意義
+     → 停用並說明，不要留一個點了沒反應的按鈕 */
+  var na = (state.group === 'diversity');
+  document.querySelectorAll('#scale-seg button').forEach(function (b) {
+    b.disabled = na;
+    b.setAttribute('aria-disabled', String(na));
+    b.title = na ? '多樣性指數沒有百分比色階，切到其他族群才適用' : '';
+  });
+  var note = document.getElementById('scale-note');
+  if (note) note.textContent = na ? '多樣性指數非百分比，色階不適用' : '';
+  var seg = document.getElementById('scale-seg');
+  if (seg) seg.classList.toggle('is-na', na);
+}
+
 function renderMapViewControls() {
   var sg = document.getElementById('group-seg');
   if (!sg) return;
   sg.textContent = '';
   GROUPS.forEach(function (g) {
     sg.appendChild(el('button', {
-      'aria-pressed': String(state.group === g.key),
-      onclick:function () { state.group = g.key; renderMap(); renderDetail(); renderRank(); syncHash(); }
+      'data-v': g.key,
+      onclick:function () { state.group = g.key; renderMap(); renderDetail(); renderRank(); syncSegState(); syncHash(); }
     }, [el('i', { class:'swatch', style:'background:' + g.color }), el('span', { text:g.label })]));
   });
   sg.appendChild(el('button', {
-    'aria-pressed': String(state.group === 'diversity'),
-    onclick:function () { state.group = 'diversity'; renderMap(); renderDetail(); renderRank(); syncHash(); }
+    'data-v': 'diversity',
+    onclick:function () { state.group = 'diversity'; renderMap(); renderDetail(); renderRank(); syncSegState(); syncHash(); }
   }, [el('i', { class:'swatch', style:'background:linear-gradient(135deg,#e8e2f5,#4b2e83)' }), el('span', { text:'多樣性' })]));
   sg.appendChild(el('button', {
-    'aria-pressed': String(state.group === 'other'),
-    onclick:function () { state.group = 'other'; renderMap(); renderDetail(); renderRank(); syncHash(); }
+    'data-v': 'other',
+    onclick:function () { state.group = 'other'; renderMap(); renderDetail(); renderRank(); syncSegState(); syncHash(); }
   }, [el('i', { class:'swatch', style:'background:var(--g-taiwanese)' }), el('span', { text:'其他／未答' })]));
 
   var sc = document.getElementById('region-seg');
   sc.textContent = '';
   ['all'].concat(REGIONS).forEach(function (r) {
     sc.appendChild(el('button', {
-      'aria-pressed': String(state.region === r),
+      'data-v': r,
       text: r === 'all' ? '全部' : r,
-      onclick:function () { state.region = r; renderMap(); syncHash(); }
+      onclick:function () { state.region = r; renderMap(); syncSegState(); syncHash(); }
     }));
   });
 
@@ -1595,8 +1626,8 @@ function renderMapViewControls() {
   sv.textContent = '';
   [['auto','依資料範圍'], ['fixed100','固定 0–100']].forEach(function (m) {
     sv.appendChild(el('button', {
-      'aria-pressed': String(state.scaleMode === m[0]), text:m[1],
-      onclick:function () { state.scaleMode = m[0]; renderMap(); }
+      'data-v': m[0], text:m[1],
+      onclick:function () { state.scaleMode = m[0]; renderMap(); syncSegState(); }
     }));
   });
 
@@ -1605,6 +1636,7 @@ function renderMapViewControls() {
   cb.onchange = function () { state.showValues = cb.checked; renderLabels(); };
   var hint = document.getElementById('map-hint');
   if (hint) hint.hidden = state.view !== 'map';
+  syncSegState();
 }
 
 /* ── 9. 檢視：跨縣市比較 ─────────────────────────────────────────────── */
@@ -2045,7 +2077,7 @@ function setView(v) {
   document.querySelectorAll('.tab').forEach(function (t) {
     t.setAttribute('aria-selected', String(t.dataset.view === v));
   });
-  if (v === 'map') { renderMapViewControls(); renderMap(); renderDetail(); }
+  if (v === 'map') { renderMapViewControls(); renderMap(); renderDetail(); syncSegState(); }
   if (v === 'rank') renderRank();
   if (v === 'compare') renderCompare();
   if (v === 'data') renderTable();
